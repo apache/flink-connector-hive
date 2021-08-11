@@ -18,18 +18,16 @@
 
 package org.apache.flink.table.module.hive;
 
-import org.apache.flink.table.descriptors.DescriptorProperties;
-import org.apache.flink.table.descriptors.ModuleDescriptorValidator;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.ConfigOptions;
 
-/** Validator for {@link HiveModuleDescriptor}. */
-public class HiveModuleDescriptorValidator extends ModuleDescriptorValidator {
-    public static final String MODULE_TYPE_HIVE = "hive";
-    public static final String MODULE_HIVE_VERSION = "hive-version";
+/** Configuration options for the Hive module. */
+@PublicEvolving
+public class HiveModuleOptions {
 
-    @Override
-    public void validate(DescriptorProperties properties) {
-        super.validate(properties);
-        properties.validateValue(MODULE_TYPE, MODULE_TYPE_HIVE, false);
-        properties.validateString(MODULE_HIVE_VERSION, true, 1);
-    }
+    public static final ConfigOption<String> HIVE_VERSION =
+            ConfigOptions.key("hive-version").stringType().noDefaultValue();
+
+    private HiveModuleOptions() {}
 }
