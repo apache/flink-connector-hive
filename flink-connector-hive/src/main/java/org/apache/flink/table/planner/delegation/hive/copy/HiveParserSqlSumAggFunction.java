@@ -36,6 +36,7 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ImmutableIntList;
+import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,21 +95,21 @@ public class HiveParserSqlSumAggFunction extends SqlAggFunction
             RelDataType countRetType =
                     typeFactory.createTypeWithNullability(
                             typeFactory.createSqlType(SqlTypeName.BIGINT), true);
-            return AggregateCall.create(
-                    new HiveParserSqlCountAggFunction(
-                            isDistinct,
-                            ReturnTypes.explicit(countRetType),
-                            operandTypeInference,
-                            operandTypeChecker),
-                    false,
-                    false,
-                    false,
-                    ImmutableIntList.of(),
-                    -1,
-                    null,
-                    RelCollations.EMPTY,
-                    countRetType,
-                    "count");
+            return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                    .create(new HiveParserSqlCountAggFunction(
+                                isDistinct,
+                                ReturnTypes.explicit(countRetType),
+                                operandTypeInference,
+                                operandTypeChecker),
+                            false,
+                            false,
+                            false,
+                            ImmutableIntList.of(),
+                            -1,
+                            null,
+                            RelCollations.EMPTY,
+                            countRetType,
+                            "count");
         }
 
         @Override
@@ -143,21 +144,21 @@ public class HiveParserSqlSumAggFunction extends SqlAggFunction
                     throw new AssertionError("unexpected count " + merges);
             }
             int ordinal = extra.register(node);
-            return AggregateCall.create(
-                    new HiveParserSqlSumAggFunction(
-                            isDistinct,
-                            returnTypeInference,
-                            operandTypeInference,
-                            operandTypeChecker),
-                    false,
-                    false,
-                    false,
-                    Collections.singletonList(ordinal),
-                    -1,
-                    null,
-                    RelCollations.EMPTY,
-                    aggregateCall.type,
-                    aggregateCall.name);
+            return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                    .create(new HiveParserSqlSumAggFunction(
+                                    isDistinct,
+                                    returnTypeInference,
+                                    operandTypeInference,
+                                    operandTypeChecker),
+                            false,
+                            false,
+                            false,
+                            Collections.singletonList(ordinal),
+                            -1,
+                            null,
+                            RelCollations.EMPTY,
+                            aggregateCall.type,
+                            aggregateCall.name);
         }
     }
 }
