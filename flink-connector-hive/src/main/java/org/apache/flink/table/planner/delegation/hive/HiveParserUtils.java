@@ -1678,17 +1678,17 @@ public class HiveParserUtils {
                             typeFactory, aggFunction, types, operands, groupCount, filterArg >= 0);
             type = aggFunction.inferReturnType(callBinding);
         }
-        return AggregateCall.create(
-                aggFunction,
-                distinct,
-                approximate,
-                ignoreNulls,
-                argList,
-                filterArg,
-                null,
-                collation,
-                type,
-                name);
+        return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                .create(aggFunction,
+                        distinct,
+                        approximate,
+                        ignoreNulls,
+                        argList,
+                        filterArg,
+                        null,
+                        collation,
+                        type,
+                        name);
     }
 
     public static boolean isFromTimeStampToDecimal(RelDataType srcType, RelDataType targetType) {

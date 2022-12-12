@@ -1191,21 +1191,21 @@ public class HiveParserCalcitePlanner {
 
         // GROUPING__ID is a virtual col in Hive, so we use Flink's function
         if (hasGroupSets) {
-            // Create GroupingID column
-            AggregateCall aggCall =
-                    AggregateCall.create(
-                            SqlStdOperatorTable.GROUPING_ID,
-                            false,
-                            false,
-                            false,
-                            gbKeyIndices,
-                            -1,
-                            null,
-                            RelCollations.EMPTY,
-                            groupSet.cardinality(),
-                            gbInputRel,
-                            null,
-                            null);
+            AggregateCall aggCall = FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                    .create(
+                    SqlStdOperatorTable.GROUPING_ID,
+                    false,
+                    false,
+                    false,
+                    gbKeyIndices,
+                    -1,
+                    null,
+                    RelCollations.EMPTY,
+                    groupSet.cardinality(),
+                    gbInputRel,
+                    null,
+                    null
+            );
             aggregateCalls.add(aggCall);
         }
 

@@ -30,6 +30,7 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ImmutableIntList;
+import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
 
 /**
  * Counterpart of hive's
@@ -79,7 +80,7 @@ public class HiveParserSqlCountAggFunction extends SqlAggFunction
         @Override
         public AggregateCall other(RelDataTypeFactory typeFactory, AggregateCall e) {
 
-            return AggregateCall.create(
+            return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion()).create(
                     new HiveParserSqlCountAggFunction(
                             isDistinct,
                             returnTypeInference,
