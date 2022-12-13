@@ -19,51 +19,65 @@
 package org.apache.flink.table.planner.delegation.hive;
 
 import org.apache.flink.util.FlinkException;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-
-/** Tests for Flink Planner Calcite Shim Helper*/
+/** Tests for Flink Planner Calcite Shim Helper */
 public class FlinkPlannerCalciteShimTest {
 
     @Test
     public void testFlinkPlannerCalciteShimLoader() throws FlinkException {
-        FlinkPlannerCalciteShim shim16 = FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_16);
-        Assert.assertTrue("calcite shim should match flink 1.16", shim16 instanceof FlinkPlannerCalciteShim16);
+        FlinkPlannerCalciteShim shim16 =
+                FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_16);
+        Assert.assertTrue(
+                "calcite shim should match flink 1.16",
+                shim16 instanceof FlinkPlannerCalciteShim16);
 
-        FlinkPlannerCalciteShim shim16snapshot = FlinkPlannerCalciteShim.loadShim(
-                FlinkPlannerCalciteShim.FLINK_1_16 + "-SNAPSHOT");
-        Assert.assertTrue("calcite shim should match flink 1.16-SNAPSHOT",
+        FlinkPlannerCalciteShim shim16snapshot =
+                FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_16 + "-SNAPSHOT");
+        Assert.assertTrue(
+                "calcite shim should match flink 1.16-SNAPSHOT",
                 shim16snapshot instanceof FlinkPlannerCalciteShim16);
 
-        FlinkPlannerCalciteShim shim17 = FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_17);
-        Assert.assertTrue("calcite shim should match flink 1.17", shim17 instanceof FlinkPlannerCalciteShim17);
+        FlinkPlannerCalciteShim shim17 =
+                FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_17);
+        Assert.assertTrue(
+                "calcite shim should match flink 1.17",
+                shim17 instanceof FlinkPlannerCalciteShim17);
 
-        FlinkPlannerCalciteShim shim17snapshot = FlinkPlannerCalciteShim.loadShim(
-                FlinkPlannerCalciteShim.FLINK_1_17 + "-SNAPSHOT");
-        Assert.assertTrue("calcite shim should match flink 1.17-SNAPSHOT",
+        FlinkPlannerCalciteShim shim17snapshot =
+                FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.FLINK_1_17 + "-SNAPSHOT");
+        Assert.assertTrue(
+                "calcite shim should match flink 1.17-SNAPSHOT",
                 shim17snapshot instanceof FlinkPlannerCalciteShim17);
     }
 
     @Test
     public void testFlinkVersionCompareCheck() {
-        Assert.assertTrue("input version should be greater than target version",
+        Assert.assertTrue(
+                "input version should be greater than target version",
                 FlinkPlannerCalciteShim.isVersionNoLess(
                         FlinkPlannerCalciteShim.FLINK_1_16, FlinkPlannerCalciteShim.FLINK_1_15));
 
-        Assert.assertTrue("input version should be greater than target version",
+        Assert.assertTrue(
+                "input version should be greater than target version",
                 FlinkPlannerCalciteShim.isVersionNoLess(
-                        FlinkPlannerCalciteShim.FLINK_1_17 + "-SNAPSHOT", FlinkPlannerCalciteShim.FLINK_1_15));
+                        FlinkPlannerCalciteShim.FLINK_1_17 + "-SNAPSHOT",
+                        FlinkPlannerCalciteShim.FLINK_1_15));
 
-        Assert.assertTrue("input version should be greater than target version",
+        Assert.assertTrue(
+                "input version should be greater than target version",
                 FlinkPlannerCalciteShim.isVersionNoLess(
                         "1.18-SNAPSHOT", FlinkPlannerCalciteShim.FLINK_1_15));
 
-        Assert.assertTrue("only support flink 1.16+",
-                FlinkPlannerCalciteShim.isVersionNoLess("1.16-SNAPSHOT", FlinkPlannerCalciteShim.FLINK_1_16));
+        Assert.assertTrue(
+                "only support flink 1.16+",
+                FlinkPlannerCalciteShim.isVersionNoLess(
+                        "1.16-SNAPSHOT", FlinkPlannerCalciteShim.FLINK_1_16));
 
-        Assert.assertTrue("input version should be greater than target version",
+        Assert.assertTrue(
+                "input version should be greater than target version",
                 FlinkPlannerCalciteShim.isVersionNoLess(
                         "2.0-FOOBAR", FlinkPlannerCalciteShim.FLINK_1_15));
     }
@@ -71,7 +85,9 @@ public class FlinkPlannerCalciteShimTest {
     @Test
     public void testFlinkPlannerVersionCheck() {
         String version = FlinkPlannerCalciteShim.getFLinkPlannerVersion();
-        Assert.assertTrue("only support flink 1.16+",
-                FlinkPlannerCalciteShim.isVersionNoLess(version, FlinkPlannerCalciteShim.FLINK_1_16));
+        Assert.assertTrue(
+                "only support flink 1.16+",
+                FlinkPlannerCalciteShim.isVersionNoLess(
+                        version, FlinkPlannerCalciteShim.FLINK_1_16));
     }
 }

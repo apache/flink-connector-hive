@@ -1193,23 +1193,25 @@ public class HiveParserCalcitePlanner {
         if (hasGroupSets) {
             AggregateCall aggCall = null;
             try {
-                aggCall = FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
-                        .create(
-                                SqlStdOperatorTable.GROUPING_ID,
-                                false,
-                                false,
-                                false,
-                                gbKeyIndices,
-                                -1,
-                                null,
-                                RelCollations.EMPTY,
-                                groupSet.cardinality(),
-                                gbInputRel,
-                                null,
-                                null
-                        );
+                aggCall =
+                        FlinkPlannerCalciteShim.loadShim(
+                                        FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                                .create(
+                                        SqlStdOperatorTable.GROUPING_ID,
+                                        false,
+                                        false,
+                                        false,
+                                        gbKeyIndices,
+                                        -1,
+                                        null,
+                                        RelCollations.EMPTY,
+                                        groupSet.cardinality(),
+                                        gbInputRel,
+                                        null,
+                                        null);
             } catch (Exception e) {
-                throw new RuntimeException("FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
+                throw new RuntimeException(
+                        "FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
             }
             aggregateCalls.add(aggCall);
         }

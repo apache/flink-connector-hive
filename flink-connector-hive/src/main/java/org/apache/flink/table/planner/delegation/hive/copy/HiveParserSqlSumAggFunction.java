@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.delegation.hive.copy;
 
+import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
+
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.type.RelDataType;
@@ -36,7 +38,6 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ImmutableIntList;
-import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,8 +97,10 @@ public class HiveParserSqlSumAggFunction extends SqlAggFunction
                     typeFactory.createTypeWithNullability(
                             typeFactory.createSqlType(SqlTypeName.BIGINT), true);
             try {
-                return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
-                        .create(new HiveParserSqlCountAggFunction(
+                return FlinkPlannerCalciteShim.loadShim(
+                                FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                        .create(
+                                new HiveParserSqlCountAggFunction(
                                         isDistinct,
                                         ReturnTypes.explicit(countRetType),
                                         operandTypeInference,
@@ -149,8 +152,10 @@ public class HiveParserSqlSumAggFunction extends SqlAggFunction
             }
             int ordinal = extra.register(node);
             try {
-                return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
-                        .create(new HiveParserSqlSumAggFunction(
+                return FlinkPlannerCalciteShim.loadShim(
+                                FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                        .create(
+                                new HiveParserSqlSumAggFunction(
                                         isDistinct,
                                         returnTypeInference,
                                         operandTypeInference,
@@ -165,7 +170,8 @@ public class HiveParserSqlSumAggFunction extends SqlAggFunction
                                 aggregateCall.type,
                                 aggregateCall.name);
             } catch (Exception e) {
-                throw new RuntimeException("FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
+                throw new RuntimeException(
+                        "FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
             }
         }
     }

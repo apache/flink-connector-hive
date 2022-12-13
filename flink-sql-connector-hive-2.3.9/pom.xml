@@ -79,7 +79,7 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>org.pentaho</groupId>
-					<artifactId>*</artifactId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>io.netty</groupId>
@@ -132,6 +132,13 @@ under the License.
 									<artifact>org.apache.hive:hive-exec</artifact>
 									<excludes>
 										<exclude>org/apache/calcite/**</exclude>
+									</excludes>
+								</filter>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>mozilla/public-suffix-list.txt</exclude>
+										<exclude>templates/release-notes.vm</exclude>
 									</excludes>
 								</filter>
 							</filters>
