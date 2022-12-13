@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Flink planner calcite shim */
+/** Flink planner calcite shim proxy calcite rel method signature change in flink table planner*/
 public interface FlinkPlannerCalciteShim extends Serializable {
 
   String FLINK_1_16 = "1.16";
@@ -56,7 +56,8 @@ public interface FlinkPlannerCalciteShim extends Serializable {
       int groupCount,
       RelNode input,
       RelDataType type,
-      String name);
+      String name)
+      throws Exception;
 
   AggregateCall create(
       SqlAggFunction aggFunction,
@@ -68,33 +69,34 @@ public interface FlinkPlannerCalciteShim extends Serializable {
       ImmutableBitSet distinctKeys,
       RelCollation collation,
       RelDataType type,
-      String name);
+      String name)
+      throws Exception;
 
   static String getFLinkPlannerVersion() {
     return org.apache.calcite.rel.RelNode.class.getPackage().getImplementationVersion();
   }
 
-  static boolean isVersionNoLess(String version, String target){
-      Matcher m = VERSION_PATTERN.matcher(version);
+  static boolean isVersionNoLess(String version, String target) {
+    Matcher m = VERSION_PATTERN.matcher(version);
 
-      if (m.find()) {
-          String[] versionArray = m.group(1).split("\\.");
-          String[] targetVersionArray = target.split("\\.");
+    if (m.find()) {
+      String[] versionArray = m.group(1).split("\\.");
+      String[] targetVersionArray = target.split("\\.");
 
-          int i  = 0;
-          while (i < versionArray.length && i < targetVersionArray.length) {
-            int VNo = Integer.valueOf(versionArray[i]);
-            int TNo = Integer.valueOf(targetVersionArray[i]);
-            if (VNo == TNo) {
-                i++;
-            } else {
-                return VNo > TNo;
-            }
-          }
-          return versionArray.length >= targetVersionArray.length;
-      } else {
-          throw new RuntimeException("flink planner version is invalid");
+      int i = 0;
+      while (i < versionArray.length && i < targetVersionArray.length) {
+        int VNo = Integer.valueOf(versionArray[i]);
+        int TNo = Integer.valueOf(targetVersionArray[i]);
+        if (VNo == TNo) {
+          i++;
+        } else {
+          return VNo > TNo;
+        }
       }
+      return versionArray.length >= targetVersionArray.length;
+    } else {
+      throw new RuntimeException("flink planner version is invalid");
+    }
   }
 
   static FlinkPlannerCalciteShim loadShim(String version) {
@@ -104,7 +106,7 @@ public interface FlinkPlannerCalciteShim extends Serializable {
           if (v.startsWith(FLINK_1_16)) {
             return new FlinkPlannerCalciteShim16();
           } else if (isVersionNoLess(version, FLINK_1_17)) {
-              return new FlinkPlannerCalciteShim17();
+            return new FlinkPlannerCalciteShim17();
           } else {
             /** flink-connector-hive can build with 1.16+ only */
             throw new RuntimeException("unsupported flink planner exception");

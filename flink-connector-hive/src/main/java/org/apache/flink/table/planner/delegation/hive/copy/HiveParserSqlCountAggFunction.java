@@ -80,22 +80,26 @@ public class HiveParserSqlCountAggFunction extends SqlAggFunction
         @Override
         public AggregateCall other(RelDataTypeFactory typeFactory, AggregateCall e) {
 
-            return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion()).create(
-                    new HiveParserSqlCountAggFunction(
-                            isDistinct,
-                            returnTypeInference,
-                            operandTypeInference,
-                            operandTypeChecker),
-                    false,
-                    false,
-                    false,
-                    ImmutableIntList.of(),
-                    -1,
-                    null,
-                    RelCollations.EMPTY,
-                    typeFactory.createTypeWithNullability(
-                            typeFactory.createSqlType(SqlTypeName.BIGINT), true),
-                    "count");
+            try {
+                return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion()).create(
+                        new HiveParserSqlCountAggFunction(
+                                isDistinct,
+                                returnTypeInference,
+                                operandTypeInference,
+                                operandTypeChecker),
+                        false,
+                        false,
+                        false,
+                        ImmutableIntList.of(),
+                        -1,
+                        null,
+                        RelCollations.EMPTY,
+                        typeFactory.createTypeWithNullability(
+                                typeFactory.createSqlType(SqlTypeName.BIGINT), true),
+                        "count");
+            } catch (Exception ex) {
+                throw new RuntimeException("FlinkPlannerCalciteShim fail to invoke AggregateCall.create", ex);
+            }
         }
     }
 }
