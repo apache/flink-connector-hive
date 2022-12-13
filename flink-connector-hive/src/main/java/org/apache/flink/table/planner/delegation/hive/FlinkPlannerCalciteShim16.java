@@ -25,7 +25,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.util.ImmutableBitSet;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -44,41 +43,36 @@ public class FlinkPlannerCalciteShim16 implements FlinkPlannerCalciteShim {
       int groupCount,
       RelNode input,
       RelDataType type,
-      String name) {
-    try {
-      Method createMethod =
-          org.apache.calcite.rel.core.AggregateCall.class.getMethod(
-              "create",
-              SqlAggFunction.class,
-              boolean.class,
-              boolean.class,
-              Boolean.class,
-              List.class,
-              int.class,
-              ImmutableBitSet.class,
-              RelCollation.class,
-              int.class,
-              RelNode.class,
-              RelDataType.class,
-              String.class);
-      return (AggregateCall)
-          createMethod.invoke(
-              null,
-              aggFunction,
-              distinct,
-              approximate,
-              ignoreNulls,
-              argList,
-              filterArg,
-              distinctKeys,
-              collation,
-              groupCount,
-              input,
-              type,
-              name);
-    } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
+      String name)
+      throws Exception {
+    Method createMethod =
+        org.apache.calcite.rel.core.AggregateCall.class.getMethod(
+            "create",
+            SqlAggFunction.class,
+            boolean.class,
+            boolean.class,
+            boolean.class,
+            List.class,
+            int.class,
+            RelCollation.class,
+            int.class,
+            RelNode.class,
+            RelDataType.class,
+            String.class);
+    return (AggregateCall)
+        createMethod.invoke(
+            null,
+            aggFunction,
+            distinct,
+            approximate,
+            ignoreNulls,
+            argList,
+            filterArg,
+            collation,
+            groupCount,
+            input,
+            type,
+            name);
   }
 
   public AggregateCall create(
@@ -91,36 +85,31 @@ public class FlinkPlannerCalciteShim16 implements FlinkPlannerCalciteShim {
       ImmutableBitSet distinctKeys,
       RelCollation collation,
       RelDataType type,
-      String name) {
-    try {
-      Method createMethod =
-          org.apache.calcite.rel.core.AggregateCall.class.getMethod(
-              "create",
-              SqlAggFunction.class,
-              boolean.class,
-              boolean.class,
-              Boolean.class,
-              List.class,
-              int.class,
-              ImmutableBitSet.class,
-              RelCollation.class,
-              RelDataType.class,
-              String.class);
-      return (AggregateCall)
-          createMethod.invoke(
-              null,
-              aggFunction,
-              distinct,
-              approximate,
-              ignoreNulls,
-              argList,
-              filterArg,
-              distinctKeys,
-              collation,
-              type,
-              name);
-    } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
+      String name)
+      throws Exception {
+    Method createMethod =
+        org.apache.calcite.rel.core.AggregateCall.class.getMethod(
+            "create",
+            SqlAggFunction.class,
+            boolean.class,
+            boolean.class,
+            boolean.class,
+            List.class,
+            int.class,
+            RelCollation.class,
+            RelDataType.class,
+            String.class);
+    return (AggregateCall)
+        createMethod.invoke(
+            null,
+            aggFunction,
+            distinct,
+            approximate,
+            ignoreNulls,
+            argList,
+            filterArg,
+            collation,
+            type,
+            name);
   }
 }
