@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.delegation.hive.copy;
 
+import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
+
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -30,7 +32,6 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ImmutableIntList;
-import org.apache.flink.table.planner.delegation.hive.FlinkPlannerCalciteShim;
 
 /**
  * Counterpart of hive's
@@ -81,24 +82,27 @@ public class HiveParserSqlCountAggFunction extends SqlAggFunction
         public AggregateCall other(RelDataTypeFactory typeFactory, AggregateCall e) {
 
             try {
-                return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion()).create(
-                        new HiveParserSqlCountAggFunction(
-                                isDistinct,
-                                returnTypeInference,
-                                operandTypeInference,
-                                operandTypeChecker),
-                        false,
-                        false,
-                        false,
-                        ImmutableIntList.of(),
-                        -1,
-                        null,
-                        RelCollations.EMPTY,
-                        typeFactory.createTypeWithNullability(
-                                typeFactory.createSqlType(SqlTypeName.BIGINT), true),
-                        "count");
+                return FlinkPlannerCalciteShim.loadShim(
+                                FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                        .create(
+                                new HiveParserSqlCountAggFunction(
+                                        isDistinct,
+                                        returnTypeInference,
+                                        operandTypeInference,
+                                        operandTypeChecker),
+                                false,
+                                false,
+                                false,
+                                ImmutableIntList.of(),
+                                -1,
+                                null,
+                                RelCollations.EMPTY,
+                                typeFactory.createTypeWithNullability(
+                                        typeFactory.createSqlType(SqlTypeName.BIGINT), true),
+                                "count");
             } catch (Exception ex) {
-                throw new RuntimeException("FlinkPlannerCalciteShim fail to invoke AggregateCall.create", ex);
+                throw new RuntimeException(
+                        "FlinkPlannerCalciteShim fail to invoke AggregateCall.create", ex);
             }
         }
     }

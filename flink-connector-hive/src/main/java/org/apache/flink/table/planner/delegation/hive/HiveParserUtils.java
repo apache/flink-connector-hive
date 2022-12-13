@@ -1679,8 +1679,10 @@ public class HiveParserUtils {
             type = aggFunction.inferReturnType(callBinding);
         }
         try {
-            return FlinkPlannerCalciteShim.loadShim(FlinkPlannerCalciteShim.getFLinkPlannerVersion())
-                    .create(aggFunction,
+            return FlinkPlannerCalciteShim.loadShim(
+                            FlinkPlannerCalciteShim.getFLinkPlannerVersion())
+                    .create(
+                            aggFunction,
                             distinct,
                             approximate,
                             ignoreNulls,
@@ -1691,7 +1693,8 @@ public class HiveParserUtils {
                             type,
                             name);
         } catch (Exception e) {
-            throw new RuntimeException("FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
+            throw new RuntimeException(
+                    "FlinkPlannerCalciteShim fail to invoke AggregateCall.create", e);
         }
     }
 

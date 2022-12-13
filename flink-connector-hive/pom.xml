@@ -41,7 +41,7 @@ under the License.
 		<hive.avro.version>1.8.2</hive.avro.version>
 	</properties>
 
-	<!-- Overwrite hadoop dependency management from flink-parent to use locally defined Hadoop version -->
+	<!-- Overwrite hadoop dependency in hive -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -159,6 +159,7 @@ under the License.
 		</dependency>
 
 		<!-- HiveServer2 Endpoint -->
+
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-sql-gateway-api</artifactId>
@@ -245,13 +246,31 @@ under the License.
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
+			<version>${hivemetastore.hadoop.version}</version>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.pentaho</groupId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.avro</groupId>
+					<artifactId>avro</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-mapreduce-client-core</artifactId>
+			<version>${hivemetastore.hadoop.version}</version>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- Hive -->
@@ -265,6 +284,17 @@ under the License.
 			<version>${hive.version}</version>
 			<scope>provided</scope>
 			<exclusions>
+				<exclusion>
+					<!-- Override arrow netty dependency -->
+					<groupId>io.netty</groupId>
+					<artifactId>netty-buffer</artifactId>
+				</exclusion>
+				<exclusion>
+					<!-- Override arrow netty dependency -->
+					<groupId>io.netty</groupId>
+					<artifactId>netty-common</artifactId>
+				</exclusion>
+
 				<exclusion>
 					<groupId>org.apache.hive</groupId>
 					<artifactId>hive-shims</artifactId>
@@ -288,6 +318,10 @@ under the License.
 				<exclusion>
 					<groupId>commons-lang</groupId>
 					<artifactId>commons-lang</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>commons-pool</groupId>
+					<artifactId>commons-pool</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>co.cask.tephra</groupId>
@@ -532,7 +566,7 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>org.pentaho</groupId>
-					<artifactId>*</artifactId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>io.netty</groupId>
@@ -591,6 +625,12 @@ under the License.
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-clients</artifactId>
+			<version>${flink.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-yarn</artifactId>
 			<version>${flink.version}</version>
 			<scope>test</scope>
 		</dependency>
@@ -714,6 +754,14 @@ under the License.
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpcore</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>org.jamon</groupId>
 					<artifactId>jamon-runtime</artifactId>
 				</exclusion>
@@ -796,7 +844,7 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>org.pentaho</groupId>
-					<artifactId>*</artifactId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -857,7 +905,7 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>org.pentaho</groupId>
-					<artifactId>*</artifactId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -890,7 +938,15 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>org.pentaho</groupId>
-					<artifactId>*</artifactId>
+					<artifactId>pentaho-aggdesigner-algorithm</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-common</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-core</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -936,10 +992,21 @@ under the License.
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Required by orc tests -->
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-hdfs</artifactId>
 			<version>${hivemetastore.hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty</artifactId>
+				</exclusion>
+			</exclusions>
 			<scope>test</scope>
 		</dependency>
 
@@ -948,6 +1015,13 @@ under the License.
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-architecture-tests-test</artifactId>
+			<version>${flink.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-architecture-tests-production</artifactId>
 			<version>${flink.version}</version>
 			<scope>test</scope>
 		</dependency>
@@ -986,6 +1060,14 @@ under the License.
 				<exclusion>
 					<groupId>org.jamon</groupId>
 					<artifactId>jamon-runtime</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpcore</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>log4j</groupId>
@@ -1127,6 +1209,12 @@ under the License.
 										<exclude>META-INF/services/org.apache.flink.table.factories.TableFactory</exclude>
 									</excludes>
 								</filter>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>mozilla/**</exclude>
+									</excludes>
+								</filter>
 							</filters>
 						</configuration>
 					</execution>
@@ -1145,56 +1233,6 @@ under the License.
 				<!-- need a hadoop version that fixes HADOOP-14683 -->
 				<hivemetastore.hadoop.version>2.8.2</hivemetastore.hadoop.version>
 			</properties>
-
-			<dependencyManagement>
-				<dependencies>
-					<dependency>
-						<groupId>org.apache.hive</groupId>
-						<artifactId>hive-metastore</artifactId>
-						<version>${hive.version}</version>
-						<scope>provided</scope>
-						<exclusions>
-							<exclusion>
-								<!-- Override arrow netty dependency -->
-								<groupId>io.netty</groupId>
-								<artifactId>netty-buffer</artifactId>
-							</exclusion>
-							<exclusion>
-								<!-- Override arrow netty dependency -->
-								<groupId>io.netty</groupId>
-								<artifactId>netty-common</artifactId>
-							</exclusion>
-						</exclusions>
-					</dependency>
-				</dependencies>
-			</dependencyManagement>
-
-			<dependencies>
-				<dependency>
-					<!-- Bump arrow netty dependency -->
-					<groupId>io.netty</groupId>
-					<artifactId>netty-buffer</artifactId>
-					<version>4.1.46.Final</version>
-					<scope>provided</scope>
-				</dependency>
-
-				<dependency>
-					<!-- Bump arrow netty dependency -->
-					<groupId>io.netty</groupId>
-					<artifactId>netty-common</artifactId>
-					<version>4.1.46.Final</version>
-					<scope>provided</scope>
-				</dependency>
-
-				<!-- Required by orc tests -->
-				<dependency>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-hdfs</artifactId>
-					<version>${hivemetastore.hadoop.version}</version>
-					<scope>test</scope>
-				</dependency>
-			</dependencies>
-
 		</profile>
 		<profile>
 			<id>skip-hive-tests</id>

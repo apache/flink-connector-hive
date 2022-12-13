@@ -28,92 +28,92 @@ import org.apache.calcite.util.ImmutableBitSet;
 import java.lang.reflect.Method;
 import java.util.List;
 
-/** Flink Planner 1.17+ Calcite Shim */
+/** Flink Planner 1.17+ Calcite Shim. */
 public class FlinkPlannerCalciteShim17 implements FlinkPlannerCalciteShim {
 
-  public AggregateCall create(
-      SqlAggFunction aggFunction,
-      boolean distinct,
-      boolean approximate,
-      boolean ignoreNulls,
-      List<Integer> argList,
-      int filterArg,
-      ImmutableBitSet distinctKeys,
-      RelCollation collation,
-      int groupCount,
-      RelNode input,
-      RelDataType type,
-      String name)
-      throws Exception {
-    Method createMethod =
-        org.apache.calcite.rel.core.AggregateCall.class.getMethod(
-            "create",
-            SqlAggFunction.class,
-            boolean.class,
-            boolean.class,
-            boolean.class,
-            List.class,
-            int.class,
-            ImmutableBitSet.class,
-            RelCollation.class,
-            int.class,
-            RelNode.class,
-            RelDataType.class,
-            String.class);
-    return (AggregateCall)
-        createMethod.invoke(
-            null,
-            aggFunction,
-            distinct,
-            approximate,
-            ignoreNulls,
-            argList,
-            filterArg,
-            distinctKeys,
-            collation,
-            groupCount,
-            input,
-            type,
-            name);
-  }
+    public AggregateCall create(
+            SqlAggFunction aggFunction,
+            boolean distinct,
+            boolean approximate,
+            boolean ignoreNulls,
+            List<Integer> argList,
+            int filterArg,
+            ImmutableBitSet distinctKeys,
+            RelCollation collation,
+            int groupCount,
+            RelNode input,
+            RelDataType type,
+            String name)
+            throws Exception {
+        Method createMethod =
+                org.apache.calcite.rel.core.AggregateCall.class.getMethod(
+                        "create",
+                        SqlAggFunction.class,
+                        boolean.class,
+                        boolean.class,
+                        boolean.class,
+                        List.class,
+                        int.class,
+                        ImmutableBitSet.class,
+                        RelCollation.class,
+                        int.class,
+                        RelNode.class,
+                        RelDataType.class,
+                        String.class);
+        return (AggregateCall)
+                createMethod.invoke(
+                        null,
+                        aggFunction,
+                        distinct,
+                        approximate,
+                        ignoreNulls,
+                        argList,
+                        filterArg,
+                        distinctKeys,
+                        collation,
+                        groupCount,
+                        input,
+                        type,
+                        name);
+    }
 
-  public AggregateCall create(
-      SqlAggFunction aggFunction,
-      boolean distinct,
-      boolean approximate,
-      boolean ignoreNulls,
-      List<Integer> argList,
-      int filterArg,
-      ImmutableBitSet distinctKeys,
-      RelCollation collation,
-      RelDataType type,
-      String name)
-      throws Exception {
-    Method createMethod =
-        org.apache.calcite.rel.core.AggregateCall.class.getMethod(
-            "create",
-            SqlAggFunction.class,
-            boolean.class,
-            boolean.class,
-            boolean.class,
-            List.class,
-            int.class,
-            ImmutableBitSet.class,
-            RelCollation.class,
-            RelDataType.class,
-            String.class);
-    return (AggregateCall)
-        createMethod.invoke(
-            null,
-            aggFunction,
-            distinct,
-            approximate,
-            ignoreNulls,
-            argList,
-            filterArg,
-            distinctKeys,
-            collation,
-            type,
-            name);
-  }
+    public AggregateCall create(
+            SqlAggFunction aggFunction,
+            boolean distinct,
+            boolean approximate,
+            boolean ignoreNulls,
+            List<Integer> argList,
+            int filterArg,
+            ImmutableBitSet distinctKeys,
+            RelCollation collation,
+            RelDataType type,
+            String name)
+            throws Exception {
+        Method createMethod =
+                org.apache.calcite.rel.core.AggregateCall.class.getMethod(
+                        "create",
+                        SqlAggFunction.class,
+                        boolean.class,
+                        boolean.class,
+                        boolean.class,
+                        List.class,
+                        int.class,
+                        ImmutableBitSet.class,
+                        RelCollation.class,
+                        RelDataType.class,
+                        String.class);
+        return (AggregateCall)
+                createMethod.invoke(
+                        null,
+                        aggFunction,
+                        distinct,
+                        approximate,
+                        ignoreNulls,
+                        argList,
+                        filterArg,
+                        distinctKeys,
+                        collation,
+                        type,
+                        name);
+    }
 }
