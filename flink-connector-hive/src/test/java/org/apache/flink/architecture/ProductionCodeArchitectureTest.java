@@ -18,16 +18,15 @@
 
 package org.apache.flink.architecture;
 
-import org.apache.flink.architecture.common.ImportOptions;
-
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import org.apache.flink.architecture.common.ImportOptions;
 
 /** product code Architecture tests. */
 @AnalyzeClasses(
-        packages = "org.apache.flink.connector",
+        packages = {"org.apache.flink.connectors.hive", "org.apache.flink.table"},
         importOptions = {
             ImportOption.DoNotIncludeTests.class,
             ImportOption.DoNotIncludeArchives.class,
@@ -35,7 +34,6 @@ import com.tngtech.archunit.junit.ArchTests;
             ImportOptions.ExcludeShadedImportOption.class
         })
 public class ProductionCodeArchitectureTest {
-
     @ArchTest
     public static final ArchTests COMMON_TESTS = ArchTests.in(ProductionCodeArchitectureBase.class);
 }
