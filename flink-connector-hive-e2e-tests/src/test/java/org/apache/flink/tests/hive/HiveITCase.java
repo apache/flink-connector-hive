@@ -19,15 +19,15 @@
 package org.apache.flink.tests.hive;
 
 import org.apache.flink.api.common.time.Deadline;
+import org.apache.flink.connectors.hive.tests.util.flink.ClusterController;
+import org.apache.flink.connectors.hive.tests.util.flink.FlinkResource;
+import org.apache.flink.connectors.hive.tests.util.flink.FlinkResourceSetup;
+import org.apache.flink.connectors.hive.tests.util.flink.JarLocation;
+import org.apache.flink.connectors.hive.tests.util.flink.LocalStandaloneFlinkResourceFactory;
 import org.apache.flink.table.catalog.hive.HiveCatalog;
 import org.apache.flink.test.resources.ResourceTestUtils;
 import org.apache.flink.test.util.SQLJobSubmission;
 import org.apache.flink.tests.hive.containers.HiveContainers;
-import org.apache.flink.tests.util.flink.ClusterController;
-import org.apache.flink.tests.util.flink.FlinkResource;
-import org.apache.flink.tests.util.flink.FlinkResourceSetup;
-import org.apache.flink.tests.util.flink.JarLocation;
-import org.apache.flink.tests.util.flink.LocalStandaloneFlinkResourceFactory;
 import org.apache.flink.util.FileUtils;
 import org.apache.flink.util.TestLogger;
 import org.apache.flink.util.UserClassLoaderJarTestUtils;

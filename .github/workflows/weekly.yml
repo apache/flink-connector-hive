@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-name: Nightly
+name: Weekly
 on:
   schedule:
     - cron: "0 0 * * 0"
@@ -25,7 +25,26 @@ jobs:
     if: github.repository_owner == 'apache'
     strategy:
       matrix:
-        flink: [1.16-SNAPSHOT, 1.17-SNAPSHOT]
+        flink: [ 1.18.0, 1.18-SNAPSHOT, 1.19-SNAPSHOT ]
+        jdk: [ 8, 11 ]
+        # empty means test against hive2
+        mvn_profile: [ "", hive3 ]
+        exclude:
+          - jdk: 11
+            mvn_profile: hive3
+        include:
+          - jdk: 11
+            flink: 1.18.0
+            mvn_profile: "hive3,skipE2ETests"
+          - jdk: 11
+            flink: 1.18-SNAPSHOT
+            mvn_profile: "hive3,skipE2ETests"
+          - jdk: 11
+            flink: 1.19-SNAPSHOT
+            mvn_profile: "hive3,skipE2ETests"
+
     uses: apache/flink-connector-shared-utils/.github/workflows/ci.yml@ci_utils
     with:
       flink_version: ${{ matrix.flink }}
+      jdk_version: ${{ matrix.jdk }}
+      optional_maven_profiles: ${{ matrix.mvn_profile }}

@@ -18,6 +18,7 @@
 
 package org.apache.flink.connectors.hive;
 
+import org.apache.flink.FlinkVersion;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -271,6 +272,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
 
     @Test
     public void testPartitionFilter() throws Exception {
+        FlinkVersion curFlinkVersion = FlinkVersion.current();
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         TestPartitionFilterCatalog catalog =
                 new TestPartitionFilterCatalog(
@@ -306,15 +308,26 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                     .contains(
                             "table=[[test-catalog, db1, part, partitions=[{p1=2, p2=b}, {p1=3, p2=c}, {p1=4, p2=c:2}]");
             List<Row> results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[+I[2], +I[3], +I[4]]");
+            assertThat(results).hasToString("[+I[2], +I[3], +I[4]]");
 
             query = tableEnv.sqlQuery("select x from db1.part where p1>2 and p2<='a' order by x");
             explain = query.explain().split("==.*==\n");
             assertThat(catalog.fallback).isFalse();
             optimizedPlan = explain[2];
-            assertThat(optimizedPlan).as(optimizedPlan).contains("Values(tuples=[[]], values=[x])");
+            if (curFlinkVersion
+                    == FlinkVersion
+                            .v1_18) { // see https://issues.apache.org/jira/browse/FLINK-25593
+                assertThat(optimizedPlan)
+                        .as(optimizedPlan)
+                        .contains(
+                                "TableSourceScan(table=[[test-catalog, db1, part, partitions=[], project=[x]]], fields=[x])");
+            } else {
+                assertThat(optimizedPlan)
+                        .as(optimizedPlan)
+                        .contains("Values(tuples=[[]], values=[x])");
+            }
             results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[]");
+            assertThat(results).hasToString("[]");
 
             query = tableEnv.sqlQuery("select x from db1.part where p1 in (1,3,5) order by x");
             explain = query.explain().split("==.*==\n");
@@ -325,7 +338,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                     .contains(
                             "table=[[test-catalog, db1, part, partitions=[{p1=1, p2=a}, {p1=3, p2=c}], project=[x]]]");
             results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[+I[1], +I[3]]");
+            assertThat(results).hasToString("[+I[1], +I[3]]");
 
             query =
                     tableEnv.sqlQuery(
@@ -338,7 +351,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                     .contains(
                             "table=[[test-catalog, db1, part, partitions=[{p1=1, p2=a}, {p1=2, p2=b}], project=[x]]]");
             results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[+I[1], +I[2]]");
+            assertThat(results).hasToString("[+I[1], +I[2]]");
 
             query = tableEnv.sqlQuery("select x from db1.part where p2 = 'c:2' order by x");
             explain = query.explain().split("==.*==\n");
@@ -349,15 +362,26 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                     .contains(
                             "table=[[test-catalog, db1, part, partitions=[{p1=4, p2=c:2}], project=[x]]]");
             results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[+I[4]]");
+            assertThat(results).hasToString("[+I[4]]");
 
             query = tableEnv.sqlQuery("select x from db1.part where '' = p2");
             explain = query.explain().split("==.*==\n");
             assertThat(catalog.fallback).isFalse();
             optimizedPlan = explain[2];
-            assertThat(optimizedPlan).as(optimizedPlan).contains("Values(tuples=[[]], values=[x])");
+            if (curFlinkVersion
+                    == FlinkVersion
+                            .v1_18) { // see https://issues.apache.org/jira/browse/FLINK-25593
+                assertThat(optimizedPlan)
+                        .as(optimizedPlan)
+                        .contains(
+                                "TableSourceScan(table=[[test-catalog, db1, part, partitions=[], project=[x]]], fields=[x])");
+            } else {
+                assertThat(optimizedPlan)
+                        .as(optimizedPlan)
+                        .contains("Values(tuples=[[]], values=[x])");
+            }
             results = CollectionUtil.iteratorToList(query.execute().collect());
-            assertThat(results.toString()).isEqualTo("[]");
+            assertThat(results).hasToString("[]");
         } finally {
             tableEnv.executeSql("drop database db1 cascade");
         }
