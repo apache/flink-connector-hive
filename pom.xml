@@ -53,7 +53,7 @@ under the License.
         -->
         <hadoop.version>2.7.5</hadoop.version>
         <hive.version>2.3.9</hive.version>
-        <hive.avro.version>1.8.2</hive.avro.version>
+        <hive.avro.version>1.11.3</hive.avro.version>
         <!-- Keep Janino in sync with calcite. -->
         <janino.version>3.1.10</janino.version>
         <jackson-bom.version>2.15.3</jackson-bom.version>
