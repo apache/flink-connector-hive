@@ -63,7 +63,7 @@ under the License.
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-server</artifactId>
-				<version>9.3.20.v20170531</version>
+				<version>9.4.51.v20230217</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
