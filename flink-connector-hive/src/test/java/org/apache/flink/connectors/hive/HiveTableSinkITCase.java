@@ -20,7 +20,6 @@ package org.apache.flink.connectors.hive;
 
 import org.apache.flink.FlinkVersion;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.datagen.source.TestDataGenerators;
@@ -28,6 +27,7 @@ import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.util.RestartStrategyUtils;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.ExplainDetail;
 import org.apache.flink.table.api.Expressions;
@@ -787,7 +787,7 @@ class HiveTableSinkITCase {
         env.setParallelism(1);
         env.enableCheckpointing(100);
         // avoid the job to restart infinitely
-        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 1_000));
+        RestartStrategyUtils.configureFixedDelayRestartStrategy(env, 3, 1000L);
 
         StreamTableEnvironment tEnv = HiveTestUtils.createTableEnvInStreamingMode(env);
         tEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
