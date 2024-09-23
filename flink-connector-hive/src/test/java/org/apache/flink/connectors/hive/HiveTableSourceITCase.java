@@ -559,7 +559,10 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         final String dbName = "source_db";
         final String tblName = "test_parallelism_limit_pushdown";
         TableEnvironment tEnv = createTableEnv();
-        tEnv.getConfig().set(HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM, false);
+        tEnv.getConfig()
+                .set(
+                        HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM_MODE,
+                        HiveOptions.InferMode.NONE);
         tEnv.getConfig().set(ExecutionConfigOptions.TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, 2);
         tEnv.executeSql(
                 "CREATE TABLE source_db.test_parallelism_limit_pushdown "
@@ -595,7 +598,10 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         tEnv.getConfig().setSqlDialect(SqlDialect.HIVE);
         tEnv.registerCatalog("hive", hiveCatalog);
         tEnv.useCatalog("hive");
-        tEnv.getConfig().set(HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM, false);
+        tEnv.getConfig()
+                .set(
+                        HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM_MODE,
+                        HiveOptions.InferMode.NONE);
         tEnv.executeSql(
                 "CREATE TABLE source_db.test_parallelism_no_infer "
                         + "(`year` STRING, `value` INT) partitioned by (pt int)");
@@ -715,7 +721,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                         + " p1 string, p2 string, p3 string) TBLPROPERTIES("
                         + "'streaming-source.enable'='true',"
                         + "'streaming-source.partition-include'='all',"
-                        + "'streaming-source.consume-order'='create-time',"
+                        + "'streaming-source.partition-order'='create-time',"
                         + "'streaming-source.monitor-interval'='1s',"
                         + "'streaming-source.consume-start-offset'='2020-10-02 00:00:00'"
                         + ")");
@@ -771,7 +777,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                         + ") PARTITIONED BY (ts STRING) TBLPROPERTIES ("
                         + "'streaming-source.enable'='true',"
                         + "'streaming-source.monitor-interval'='1s',"
-                        + "'streaming-source.consume-order'='partition-time'"
+                        + "'streaming-source.partition-order'='partition-time'"
                         + ")");
 
         HiveTestUtils.createTextTableInserter(hiveCatalog, dbName, tblName)
@@ -896,8 +902,17 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
 
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
         tableEnv.getConfig().set(HiveOptions.TABLE_EXEC_HIVE_FALLBACK_MAPRED_READER, fallbackMR);
-        tableEnv.getConfig()
-                .set(HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM, inferParallelism);
+        if (inferParallelism) {
+            tableEnv.getConfig()
+                    .set(
+                            HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM_MODE,
+                            HiveOptions.InferMode.STATIC);
+        } else {
+            tableEnv.getConfig()
+                    .set(
+                            HiveOptions.TABLE_EXEC_HIVE_INFER_SOURCE_PARALLELISM_MODE,
+                            HiveOptions.InferMode.NONE);
+        }
         tableEnv.getConfig().set(ExecutionConfigOptions.TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, 2);
         tableEnv.registerCatalog(catalogSpy.getName(), catalogSpy);
         tableEnv.useCatalog(catalogSpy.getName());

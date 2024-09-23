@@ -285,7 +285,7 @@ class HiveTableSinkITCase {
                                     + "'partition.time-extractor.timestamp-pattern'='$pt_day $pt_hour:00:00',"
                                     + "'streaming-source.enable'='true',"
                                     + "'streaming-source.monitor-interval'='1s',"
-                                    + "'streaming-source.consume-order'='partition-time'"
+                                    + "'streaming-source.partition-order'='partition-time'"
                                     + ")");
 
                     tEnv.executeSql(
@@ -305,7 +305,7 @@ class HiveTableSinkITCase {
                                     + " 'sink.partition-commit.success-file.name'='_MY_SUCCESS',"
                                     + " 'streaming-source.enable'='true',"
                                     + " 'streaming-source.monitor-interval'='1s',"
-                                    + " 'streaming-source.consume-order'='partition-time'"
+                                    + " 'streaming-source.partition-order'='partition-time'"
                                     + ")");
 
                     tEnv.getConfig().setSqlDialect(SqlDialect.DEFAULT);
