@@ -20,8 +20,7 @@ package org.apache.flink.connectors.hive;
 
 import org.apache.flink.util.Preconditions;
 
-import org.apache.flink.shaded.guava32.com.google.common.io.Resources;
-
+import com.google.common.io.Resources;
 import com.klarna.hiverunner.HiveServerContainer;
 import com.klarna.hiverunner.HiveServerContext;
 import com.klarna.hiverunner.HiveShell;

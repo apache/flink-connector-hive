@@ -20,9 +20,8 @@ package org.apache.flink.connectors.hive;
 
 import org.apache.flink.table.catalog.hive.HiveTestUtils;
 
-import org.apache.flink.shaded.guava32.com.google.common.base.Joiner;
-import org.apache.flink.shaded.guava32.com.google.common.base.Throwables;
-
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.klarna.hiverunner.HiveServerContext;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
