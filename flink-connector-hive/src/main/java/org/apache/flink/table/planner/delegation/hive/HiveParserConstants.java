@@ -30,6 +30,4 @@ public class HiveParserConstants {
     /* Constants for insert overwrite directory */
     public static final String IS_INSERT_DIRECTORY = "is-insert-directory";
     public static final String IS_TO_LOCAL_DIRECTORY = "is-to-local-directory";
-    public static final String HIVE_SUPPORT_SQL_11_RESERVED_KEYWORDS =
-            "hive.support.sql11.reserved.keywords";
 }
