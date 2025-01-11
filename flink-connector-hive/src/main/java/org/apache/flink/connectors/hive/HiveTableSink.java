@@ -607,7 +607,7 @@ public class HiveTableSink implements DynamicTableSink, SupportsPartitioning, Su
         builder.setOverwrite(overwrite);
         builder.setIsToLocal(isToLocal);
         builder.setStaticPartitions(staticPartitionSpec);
-        builder.setPath(new org.apache.flink.core.fs.Path(toStagingDir(stagingParentDir, jobConf)));
+        builder.setPath(new org.apache.flink.core.fs.Path(stagingParentDir));
         builder.setOutputFileConfig(fileNaming);
         builder.setIdentifier(identifier);
         builder.setPartitionCommitPolicyFactory(
