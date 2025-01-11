@@ -181,6 +181,10 @@ under the License.
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libfb303</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -188,6 +192,12 @@ under the License.
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libfb303</artifactId>
 			<version>0.9.3</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- avro is included in hive-exec. we use the same dependencies but with a different version -->
