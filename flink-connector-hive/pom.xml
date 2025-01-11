@@ -151,6 +151,10 @@ under the License.
 						<groupId>org.pentaho</groupId>
 						<artifactId>pentaho-aggdesigner-algorithm</artifactId>
 					</exclusion>
+					<exclusion>
+						<groupId>org.apache.thrift</groupId>
+						<artifactId>libthrift</artifactId>
+					</exclusion>
 				</exclusions>
 			</dependency>
 
@@ -376,6 +380,10 @@ under the License.
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -991,6 +999,10 @@ under the License.
 					<groupId>net.minidev</groupId>
 					<artifactId>json-smart</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -1413,7 +1425,6 @@ under the License.
 			<activation>
 				<jdk>[11,)</jdk>
 			</activation>
-
 			<build>
 				<plugins>
 					<plugin>

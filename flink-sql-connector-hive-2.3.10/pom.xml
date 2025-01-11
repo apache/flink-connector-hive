@@ -108,6 +108,10 @@ under the License.
 					<groupId>jline</groupId>
 					<artifactId>jline</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
