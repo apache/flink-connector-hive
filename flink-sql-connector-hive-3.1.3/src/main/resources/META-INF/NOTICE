@@ -6,7 +6,7 @@ The Apache Software Foundation (http://www.apache.org/).
 
 This project bundles the following dependencies under the Apache Software License 2.0. (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-- org.apache.avro:avro-mapred:hadoop2:1.11.4
+- org.apache.avro:avro-mapred:hadoop2:1.8.2
 - org.apache.avro:avro:1.11.4
 - org.apache.calcite:calcite-core:1.16.0
 - org.apache.hive:hive-exec:3.1.3
