@@ -27,9 +27,9 @@ the Apache Software License 2.0 (http://www.apache.org/licenses/LICENSE-2.0.txt)
 - javax.jdo:jdo-api:3.0.1
 - joda-time:joda-time:2.8.1
 - net.sf.opencsv:opencsv:2.3
-- org.apache.avro:avro-guava-dependencies:1.8.2
-- org.apache.avro:avro-mapred:1.8.2
-- org.apache.avro:avro:1.8.2
+- org.apache.avro:avro-guava-dependencies:1.11.4
+- org.apache.avro:avro-mapred:1.11.4
+- org.apache.avro:avro:1.11.4
 - org.apache.calcite:calcite-core:1.10.0
 - org.apache.calcite:calcite-druid:1.10.0
 - org.apache.calcite:calcite-linq4j:1.10.0
