@@ -71,6 +71,11 @@ Please note Hive itself have different features available for different versions
 
 ### Dependencies
 
+{{< sql_connector_download_table "hive" >}}
+
+The Hive connector is not part of the binary distribution.
+See how to link with it for cluster execution [here]({{< ref "docs/dev/configuration/overview" >}}).
+
 To integrate with Hive, you need to add some extra dependencies to the `/lib/` directory in Flink distribution
 to make the integration work in Table API program or SQL in SQL Client.
 Alternatively, you can put these dependencies in a dedicated folder, and add them to classpath with the `-C`
