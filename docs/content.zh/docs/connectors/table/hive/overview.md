@@ -70,6 +70,11 @@ Flink 支持以下的 Hive 版本。
 
 ### 依赖项
 
+{{< sql_connector_download_table "hive" >}}
+
+The Hive connector is not part of the binary distribution.
+See how to link with it for cluster execution [here]({{< ref "docs/dev/configuration/overview" >}}).
+
 要与 Hive 集成，您需要在 Flink 下的`/lib/`目录中添加一些额外的依赖包，
 以便通过 Table API 或 SQL Client 与 Hive 进行交互。
 或者，您可以将这些依赖项放在专用文件夹中，并分别使用 Table API 程序或 SQL Client 的`-C`或`-l`选项将它们添加到 classpath 中。
