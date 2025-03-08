@@ -18,10 +18,8 @@
 
 package org.apache.flink.table.catalog.hive.factories;
 
+import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.sink.legacy.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.legacy.SinkFunction;
 import org.apache.flink.table.catalog.CatalogLock;
@@ -129,7 +127,7 @@ public class TestLockTableSinkFactory implements DynamicTableSinkFactory {
         }
 
         @Override
-        public void open(Configuration configuration) throws Exception {
+        public void open(OpenContext openContext) throws Exception {
             this.lock = lockFactory.create();
         }
 
