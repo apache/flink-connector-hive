@@ -230,6 +230,10 @@ under the License.
 					<groupId>com.google.protobuf</groupId>
 					<artifactId>protobuf-java</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>commons-pool</groupId>
+					<artifactId>commons-pool</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 	</dependencies>
