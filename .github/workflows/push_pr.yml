@@ -25,14 +25,8 @@ jobs:
   compile_and_test:
     strategy:
       matrix:
-        flink: [ 1.20.0 ]
-        jdk: [ 8 ]
-        # empty means test against hive2
-        mvn_profile: [ "", hive3 ]
-        include:
-          - jdk: 11
-            flink: 1.20.0
-            mvn_profile: ""
+        flink: [ 2.0-preview1 ]
+        jdk: [ 11 ]
 
     uses: apache/flink-connector-shared-utils/.github/workflows/ci.yml@ci_utils
     with:
