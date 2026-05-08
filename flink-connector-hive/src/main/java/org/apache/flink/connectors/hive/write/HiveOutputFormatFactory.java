@@ -62,7 +62,8 @@ public class HiveOutputFormatFactory implements OutputFormatFactory<Row> {
         public void configure(Configuration parameters) {}
 
         @Override
-        public void open(int taskNumber, int numTasks) {}
+        public void open(
+                org.apache.flink.api.common.io.OutputFormat.InitializationContext context) {}
 
         @Override
         public void writeRecord(Row record) throws IOException {

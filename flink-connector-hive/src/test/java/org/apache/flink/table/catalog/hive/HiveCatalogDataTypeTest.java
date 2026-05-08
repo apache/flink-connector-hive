@@ -205,16 +205,18 @@ public class HiveCatalogDataTypeTest {
         Schema schema = Schema.newBuilder().fromResolvedSchema(resolvedSchema).build();
 
         return new ResolvedCatalogTable(
-                CatalogTable.of(
-                        schema,
-                        "",
-                        new ArrayList<>(),
-                        new HashMap<String, String>() {
-                            {
-                                put("is_streaming", "false");
-                                put(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
-                            }
-                        }),
+                CatalogTable.newBuilder()
+                        .schema(schema)
+                        .comment("")
+                        .partitionKeys(new ArrayList<>())
+                        .options(
+                                new HashMap<String, String>() {
+                                    {
+                                        put("is_streaming", "false");
+                                        put(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
+                                    }
+                                })
+                        .build(),
                 resolvedSchema);
     }
 

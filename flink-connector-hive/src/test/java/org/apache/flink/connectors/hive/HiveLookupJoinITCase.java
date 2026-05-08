@@ -436,6 +436,7 @@ public class HiveLookupJoinITCase {
                                 tableEnvInternal
                                         .getCatalogManager()
                                         .resolveCatalogTable(catalogTable),
+                                catalogTable.getOptions(),
                                 tableEnv.getConfig(),
                                 Thread.currentThread().getContextClassLoader(),
                                 false);

@@ -35,13 +35,6 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.TableFactory;
-import org.apache.flink.table.factories.TableSinkFactoryContextImpl;
-import org.apache.flink.table.factories.TableSourceFactoryContextImpl;
-import org.apache.flink.table.sinks.StreamTableSink;
-import org.apache.flink.table.sinks.TableSink;
-import org.apache.flink.table.sources.StreamTableSource;
-import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.util.TestLoggerExtension;
 
 import org.junit.jupiter.api.AfterAll;
@@ -53,12 +46,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.apache.flink.table.catalog.hive.util.Constants.IDENTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Test for {@link HiveTableFactory}. */
+/** Test for Hive table factory via {@link HiveDynamicTableFactory}. */
 @ExtendWith(TestLoggerExtension.class)
 class HiveTableFactoryTest {
     private static HiveCatalog catalog;
@@ -75,48 +67,6 @@ class HiveTableFactoryTest {
     }
 
     @Test
-    void testGenericTable() throws Exception {
-        final ResolvedSchema resolvedSchema =
-                ResolvedSchema.of(
-                        Column.physical("name", DataTypes.STRING()),
-                        Column.physical("age", DataTypes.INT()));
-        final Schema schema = Schema.newBuilder().fromResolvedSchema(resolvedSchema).build();
-
-        catalog.createDatabase("mydb", new CatalogDatabaseImpl(new HashMap<>(), ""), true);
-
-        final Map<String, String> options =
-                Collections.singletonMap(FactoryUtil.CONNECTOR.key(), "COLLECTION");
-        final CatalogTable table =
-                new ResolvedCatalogTable(
-                        CatalogTable.of(schema, "csv table", new ArrayList<>(), options),
-                        resolvedSchema);
-        catalog.createTable(new ObjectPath("mydb", "mytable"), table, true);
-
-        final Optional<TableFactory> tableFactoryOpt = catalog.getTableFactory();
-        assertThat(tableFactoryOpt).isPresent();
-        final HiveTableFactory tableFactory = (HiveTableFactory) tableFactoryOpt.get();
-
-        final TableSource tableSource =
-                tableFactory.createTableSource(
-                        new TableSourceFactoryContextImpl(
-                                ObjectIdentifier.of("mycatalog", "mydb", "mytable"),
-                                table,
-                                new Configuration(),
-                                false));
-        assertThat(tableSource).isInstanceOf(StreamTableSource.class);
-
-        final TableSink tableSink =
-                tableFactory.createTableSink(
-                        new TableSinkFactoryContextImpl(
-                                ObjectIdentifier.of("mycatalog", "mydb", "mytable"),
-                                table,
-                                new Configuration(),
-                                true,
-                                false));
-        assertThat(tableSink).isInstanceOf(StreamTableSink.class);
-    }
-
-    @Test
     void testHiveTable() throws Exception {
         final ResolvedSchema schema =
                 ResolvedSchema.of(
@@ -129,11 +79,12 @@ class HiveTableFactoryTest {
                 Collections.singletonMap(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
         final CatalogTable table =
                 new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                Schema.newBuilder().fromResolvedSchema(schema).build(),
-                                "hive table",
-                                new ArrayList<>(),
-                                options),
+                        CatalogTable.newBuilder()
+                                .schema(Schema.newBuilder().fromResolvedSchema(schema).build())
+                                .comment("hive table")
+                                .partitionKeys(new ArrayList<>())
+                                .options(options)
+                                .build(),
                         schema);
         catalog.createTable(new ObjectPath("mydb", "mytable"), table, true);
 
@@ -143,6 +94,7 @@ class HiveTableFactoryTest {
                                 catalog.getFactory().orElseThrow(IllegalStateException::new),
                         ObjectIdentifier.of("mycatalog", "mydb", "mytable"),
                         new ResolvedCatalogTable(table, schema),
+                        table.getOptions(),
                         new Configuration(),
                         Thread.currentThread().getContextClassLoader(),
                         false);
@@ -154,6 +106,7 @@ class HiveTableFactoryTest {
                                 catalog.getFactory().orElseThrow(IllegalStateException::new),
                         ObjectIdentifier.of("mycatalog", "mydb", "mytable"),
                         new ResolvedCatalogTable(table, schema),
+                        table.getOptions(),
                         new Configuration(),
                         Thread.currentThread().getContextClassLoader(),
                         false);

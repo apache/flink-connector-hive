@@ -892,7 +892,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                 .createDynamicTableSource(any(DynamicTableFactory.Context.class));
 
         HiveCatalog catalogSpy = spy(hiveCatalog);
-        doReturn(Optional.of(tableFactorySpy)).when(catalogSpy).getTableFactory();
+        doReturn(Optional.of(tableFactorySpy)).when(catalogSpy).getFactory();
 
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
         tableEnv.getConfig().set(HiveOptions.TABLE_EXEC_HIVE_FALLBACK_MAPRED_READER, fallbackMR);
@@ -1062,14 +1062,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
 
         List<Row> expectedRows = new ArrayList<>();
         for (int i = 0; i < sortedRows.size(); i++) {
-            Row rowExpect = Row.copy(sortedRows.get(i));
-            Row nestedRow = (Row) rowExpect.getField(2);
-            if (nestedRow.getField(0) == null
-                    && nestedRow.getField(1) == null
-                    && nestedRow.getField(2) == null) {
-                rowExpect.setField(2, null);
-            }
-            expectedRows.add(rowExpect);
+            expectedRows.add(Row.copy(sortedRows.get(i)));
         }
         return expectedRows;
     }

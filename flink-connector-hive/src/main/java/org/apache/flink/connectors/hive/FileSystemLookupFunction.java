@@ -19,16 +19,14 @@
 package org.apache.flink.connectors.hive;
 
 import org.apache.flink.annotation.VisibleForTesting;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.connector.file.table.PartitionFetcher;
 import org.apache.flink.connector.file.table.PartitionReader;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.functions.FunctionContext;
-import org.apache.flink.table.functions.TableFunction;
+import org.apache.flink.table.functions.LookupFunction;
 import org.apache.flink.table.runtime.typeutils.InternalSerializers;
-import org.apache.flink.table.runtime.typeutils.InternalTypeInfo;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.FlinkRuntimeException;
 
@@ -37,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,7 @@ import java.util.Map;
  * <p>The hive connector and filesystem connector share read/write files code. Currently, this
  * function only used in hive connector.
  */
-public class FileSystemLookupFunction<P> extends TableFunction<RowData> {
+public class FileSystemLookupFunction<P> extends LookupFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileSystemLookupFunction.class);
 
@@ -99,19 +99,10 @@ public class FileSystemLookupFunction<P> extends TableFunction<RowData> {
     }
 
     @Override
-    public TypeInformation<RowData> getResultType() {
-        return InternalTypeInfo.of(rowType);
-    }
-
-    public void eval(Object... values) {
+    public Collection<RowData> lookup(RowData keyRow) {
         checkCacheReload();
-        RowData lookupKey = GenericRowData.of(values);
-        List<RowData> matchedRows = cache.get(lookupKey);
-        if (matchedRows != null) {
-            for (RowData matchedRow : matchedRows) {
-                collect(matchedRow);
-            }
-        }
+        List<RowData> matchedRows = cache.get(keyRow);
+        return matchedRows != null ? matchedRows : Collections.emptyList();
     }
 
     private void checkCacheReload() {

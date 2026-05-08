@@ -32,9 +32,8 @@ import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.hive.client.HiveShim;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.LookupTableSource;
-import org.apache.flink.table.connector.source.TableFunctionProvider;
+import org.apache.flink.table.connector.source.lookup.LookupFunctionProvider;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.Preconditions;
@@ -88,7 +87,7 @@ public class HiveLookupTableSource extends HiveTableSource implements LookupTabl
 
     @Override
     public LookupRuntimeProvider getLookupRuntimeProvider(LookupContext context) {
-        return TableFunctionProvider.of(getLookupFunction(context.getKeys()));
+        return LookupFunctionProvider.of(getLookupFunction(context.getKeys()));
     }
 
     @Override
@@ -103,7 +102,7 @@ public class HiveLookupTableSource extends HiveTableSource implements LookupTabl
     }
 
     @VisibleForTesting
-    TableFunction<RowData> getLookupFunction(int[][] keys) {
+    FileSystemLookupFunction<HiveTablePartition> getLookupFunction(int[][] keys) {
         int[] keyIndices = new int[keys.length];
         int i = 0;
         for (int[] key : keys) {
@@ -156,7 +155,7 @@ public class HiveLookupTableSource extends HiveTableSource implements LookupTabl
         }
     }
 
-    private TableFunction<RowData> getLookupFunction(int[] keys) {
+    private FileSystemLookupFunction<HiveTablePartition> getLookupFunction(int[] keys) {
 
         final String defaultPartitionName = JobConfUtils.getDefaultPartitionName(jobConf);
         PartitionFetcher.Context<HiveTablePartition> fetcherContext =

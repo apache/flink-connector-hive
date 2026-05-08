@@ -274,6 +274,7 @@ public class HiveDynamicTableFactoryTest {
                         hiveCatalog.getFactory().orElseThrow(IllegalStateException::new),
                 tableIdentifier,
                 tableEnvInternal.getCatalogManager().resolveCatalogTable(catalogTable),
+                catalogTable.getOptions(),
                 tableEnv.getConfig(),
                 Thread.currentThread().getContextClassLoader(),
                 false);
@@ -290,6 +291,7 @@ public class HiveDynamicTableFactoryTest {
                         hiveCatalog.getFactory().orElseThrow(IllegalStateException::new),
                 tableIdentifier,
                 tableEnvInternal.getCatalogManager().resolveCatalogTable(catalogTable),
+                catalogTable.getOptions(),
                 tableEnv.getConfig(),
                 Thread.currentThread().getContextClassLoader(),
                 false);

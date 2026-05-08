@@ -79,11 +79,15 @@ public class HiveSourceITCase {
         hiveCatalog.createTable(
                 tablePath,
                 new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                Schema.newBuilder().fromResolvedSchema(resolvedSchema).build(),
-                                null,
-                                new ArrayList<>(),
-                                tableOptions),
+                        CatalogTable.newBuilder()
+                                .schema(
+                                        Schema.newBuilder()
+                                                .fromResolvedSchema(resolvedSchema)
+                                                .build())
+                                .comment(null)
+                                .partitionKeys(new ArrayList<>())
+                                .options(tableOptions)
+                                .build(),
                         resolvedSchema),
                 false);
         HiveTestUtils.createTextTableInserter(
@@ -126,11 +130,15 @@ public class HiveSourceITCase {
         hiveCatalog.createTable(
                 tablePath,
                 new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                Schema.newBuilder().fromResolvedSchema(resolvedSchema).build(),
-                                null,
-                                Collections.singletonList("p"),
-                                tableOptions),
+                        CatalogTable.newBuilder()
+                                .schema(
+                                        Schema.newBuilder()
+                                                .fromResolvedSchema(resolvedSchema)
+                                                .build())
+                                .comment(null)
+                                .partitionKeys(Collections.singletonList("p"))
+                                .options(tableOptions)
+                                .build(),
                         resolvedSchema),
                 false);
         HiveTestUtils.createTextTableInserter(

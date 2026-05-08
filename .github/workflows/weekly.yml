@@ -29,16 +29,16 @@ jobs:
     if: github.repository_owner == 'apache'
     strategy:
       matrix:
-        flink: [ 1.20.0 ]
-        jdk: [ 8, 11 ]
+        flink: [ 2.0.2 ]
+        jdk: [ 11, 17 ]
         # empty means test against hive2
         mvn_profile: [ "", hive3 ]
         exclude:
-          - jdk: 11
+          - jdk: 17
             mvn_profile: hive3
         include:
-          - jdk: 11
-            flink: 1.20.0
+          - jdk: 17
+            flink: 2.0.2
             mvn_profile: "hive3,skipE2ETests"
 
     uses: apache/flink-connector-shared-utils/.github/workflows/ci.yml@ci_utils

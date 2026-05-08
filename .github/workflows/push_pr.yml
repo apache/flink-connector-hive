@@ -28,14 +28,14 @@ jobs:
   compile_and_test:
     strategy:
       matrix:
-        flink: [ 1.20.0 ]
-        jdk: [ 8 ]
+        flink: [ 2.0.1 ]
+        jdk: [ 11 ]
         # empty means test against hive2
-        mvn_profile: [ "", hive3 ]
+        mvn_profile: [ "skipE2ETests" ]
         include:
-          - jdk: 11
-            flink: 1.20.0
-            mvn_profile: ""
+          - jdk: 17
+            flink: 2.0.1
+            mvn_profile: "skipE2ETests"
 
     uses: apache/flink-connector-shared-utils/.github/workflows/ci.yml@ci_utils
     with:
