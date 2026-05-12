@@ -662,11 +662,15 @@ public class HiveParserSemanticAnalyzer {
             ResolvedSchema resolvedSchema = ResolvedSchema.physical(fieldsName, fieldsDataType);
             ResolvedCatalogTable tempTable =
                     new ResolvedCatalogTable(
-                            CatalogTable.of(
-                                    Schema.newBuilder().fromResolvedSchema(resolvedSchema).build(),
-                                    "values temp table",
-                                    new ArrayList<>(),
-                                    Collections.emptyMap()),
+                            CatalogTable.newBuilder()
+                                    .schema(
+                                            Schema.newBuilder()
+                                                    .fromResolvedSchema(resolvedSchema)
+                                                    .build())
+                                    .comment("values temp table")
+                                    .partitionKeys(new ArrayList<>())
+                                    .options(Collections.emptyMap())
+                                    .build(),
                             resolvedSchema);
             // remember the data for this table
             qb.getValuesTableToData().put(tableName, Tuple2.of(tempTable, valuesData));
