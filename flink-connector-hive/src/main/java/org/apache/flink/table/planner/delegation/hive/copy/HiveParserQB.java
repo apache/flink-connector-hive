@@ -23,7 +23,6 @@ import org.apache.flink.table.catalog.CatalogView;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.planner.delegation.hive.HiveParserQBMetaData;
 
-import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +75,7 @@ public class HiveParserQB {
      */
     private int numSubQueryPredicates;
 
-    private CreateTableDesc createTableDesc;
+    private Object createTableDesc;
 
     private HiveParserDirectoryDesc directoryDesc;
 
@@ -244,7 +243,7 @@ public class HiveParserQB {
         return true;
     }
 
-    public CreateTableDesc getTableDesc() {
+    public Object getTableDesc() {
         return createTableDesc;
     }
 

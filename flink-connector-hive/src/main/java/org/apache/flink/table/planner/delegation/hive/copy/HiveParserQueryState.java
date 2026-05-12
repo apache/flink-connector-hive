@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.delegation.hive.copy;
 
+import org.apache.flink.connectors.hive.HiveConfVars;
+
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
@@ -69,7 +71,7 @@ public class HiveParserQueryState {
             conf = new HiveConf();
         }
 
-        conf.setVar(HiveConf.ConfVars.HIVEQUERYID, QueryPlan.makeQueryId());
+        conf.setVar(HiveConfVars.HIVE_QUERY_ID, QueryPlan.makeQueryId());
         return conf;
     }
 

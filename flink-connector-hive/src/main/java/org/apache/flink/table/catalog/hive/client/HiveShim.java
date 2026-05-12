@@ -29,20 +29,30 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
 import org.apache.hadoop.hive.ql.exec.FunctionInfo;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
+import org.apache.hadoop.hive.ql.lib.Dispatcher;
+import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
 import org.apache.hadoop.hive.ql.udf.generic.SimpleGenericUDAFParameterInfo;
+import org.apache.hadoop.hive.serde2.Deserializer;
+import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
@@ -254,4 +264,65 @@ public interface HiveShim extends Serializable {
             boolean isSrcLocal);
 
     void loadTable(Hive hive, Path loadPath, String tableName, boolean replace, boolean isSrcLocal);
+
+    /** Get struct field names from a StructTypeInfo, compatible across Hive versions. */
+    List<String> getStructFieldNames(StructTypeInfo structTypeInfo);
+
+    /** Get struct field type infos from a StructTypeInfo, compatible across Hive versions. */
+    List<TypeInfo> getStructFieldTypeInfos(StructTypeInfo structTypeInfo);
+
+    /**
+     * Initialize a Deserializer with the given configuration and properties, compatible across Hive
+     * versions.
+     */
+    void initializeSerDe(
+            Deserializer deserializer,
+            Configuration conf,
+            Properties tableProperties,
+            Properties partitionProperties)
+            throws SerDeException;
+
+    /** Get column statistics for a table, compatible across Hive versions. */
+    List<ColumnStatisticsObj> getTableColumnStatistics(
+            IMetaStoreClient client,
+            String databaseName,
+            String tableName,
+            List<String> columnNames)
+            throws TException;
+
+    /** Get column statistics for partitions, compatible across Hive versions. */
+    Map<String, List<ColumnStatisticsObj>> getPartitionColumnStatistics(
+            IMetaStoreClient client,
+            String dbName,
+            String tableName,
+            List<String> partNames,
+            List<String> colNames)
+            throws TException;
+
+    /**
+     * Create a PrincipalDesc instance. The class moved from {@code
+     * org.apache.hadoop.hive.ql.plan.PrincipalDesc} to {@code
+     * org.apache.hadoop.hive.ql.ddl.privilege.PrincipalDesc} in Hive 4.
+     */
+    Object createPrincipalDesc(String principalName, PrincipalType principalType);
+
+    /**
+     * Walk an expression tree using PreOrderWalker. Hive 4 changed PreOrderWalker to require
+     * SemanticDispatcher instead of Dispatcher.
+     */
+    void walkExpressionTree(Node expression, Dispatcher dispatcher) throws SemanticException;
+
+    /**
+     * Get a GenericUDAFEvaluator for windowing functions (LEAD/LAG). Hive 4 added a 5th boolean
+     * parameter ({@code respectNulls}).
+     */
+    default GenericUDAFEvaluator getGenericWindowingEvaluator(
+            String functionName,
+            List<ObjectInspector> argumentOIs,
+            boolean isDistinct,
+            boolean isAllColumns)
+            throws SemanticException {
+        return org.apache.hadoop.hive.ql.exec.FunctionRegistry.getGenericWindowingEvaluator(
+                functionName, argumentOIs, isDistinct, isAllColumns);
+    }
 }

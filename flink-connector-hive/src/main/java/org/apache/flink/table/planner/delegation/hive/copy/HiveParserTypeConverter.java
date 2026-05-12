@@ -19,6 +19,8 @@
 package org.apache.flink.table.planner.delegation.hive.copy;
 
 import org.apache.flink.table.catalog.hive.client.HiveShim;
+import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
+import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
 import org.apache.flink.table.planner.delegation.hive.HiveParserUtils;
 
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -68,7 +70,7 @@ public class HiveParserTypeConverter {
         List<RelDataType> fieldTypes = new LinkedList<>();
         List<String> fieldNames = new LinkedList<>();
 
-        for (ColumnInfo ci : rs.getSignature()) {
+        for (ColumnInfo ci : HiveReflectionUtils.getRowSchemaSignature(rs)) {
             if (neededCols == null || neededCols.contains(ci.getInternalName())) {
                 RelDataType relDataType = convert(ci.getType(), dtFactory);
                 // if the type is struct, we set it nullable
@@ -213,12 +215,21 @@ public class HiveParserTypeConverter {
     private static RelDataType convert(
             StructTypeInfo structType, final RelDataTypeFactory dtFactory)
             throws SemanticException {
-        List<RelDataType> fTypes = new ArrayList<>(structType.getAllStructFieldTypeInfos().size());
-        for (TypeInfo ti : structType.getAllStructFieldTypeInfos()) {
+        List<RelDataType> fTypes =
+                new ArrayList<>(
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldTypeInfos(structType)
+                                .size());
+        for (TypeInfo ti :
+                HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                        .getStructFieldTypeInfos(structType)) {
             fTypes.add(convert(ti, dtFactory));
         }
         return dtFactory.createStructType(
-                StructKind.PEEK_FIELDS_NO_EXPAND, fTypes, structType.getAllStructFieldNames());
+                StructKind.PEEK_FIELDS_NO_EXPAND,
+                fTypes,
+                HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                        .getStructFieldNames(structType));
     }
 
     private static RelDataType convert(UnionTypeInfo unionType, RelDataTypeFactory dtFactory)

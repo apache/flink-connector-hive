@@ -76,7 +76,6 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBaseCompare;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBaseNumeric;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBridge;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFCase;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFIn;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFTimestamp;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToBinary;
@@ -535,7 +534,7 @@ public class HiveParserRexNodeConverter {
 
         boolean isNumeric = isNumericBinary(func);
         boolean isCompare = !isNumeric && tgtUdf instanceof GenericUDFBaseCompare;
-        boolean isWhenCase = tgtUdf instanceof GenericUDFWhen || tgtUdf instanceof GenericUDFCase;
+        boolean isWhenCase = tgtUdf instanceof GenericUDFWhen || isGenericUDFCase(tgtUdf);
         boolean isTransformableTimeStamp =
                 func.getGenericUDF() instanceof GenericUDFUnixTimeStamp
                         && func.getChildren().size() != 0;
@@ -925,5 +924,17 @@ public class HiveParserRexNodeConverter {
             this.hiveRR = hiveRR;
             this.offsetInCalciteSchema = offsetInCalciteSchema;
         }
+    }
+
+    /**
+     * Check via class name since GenericUDFCase was removed in Hive 4.1+.
+     *
+     * <p>TODO: Consider moving this check to HiveShim for consistency with other version-dependent
+     * class checks.
+     */
+    private static boolean isGenericUDFCase(Object udf) {
+        return udf.getClass()
+                .getName()
+                .equals("org.apache.hadoop.hive.ql.udf.generic.GenericUDFCase");
     }
 }

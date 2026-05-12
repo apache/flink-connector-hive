@@ -33,26 +33,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HADOOPBIN;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVECONVERTJOIN;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEHISTORYFILELOC;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEMETADATAONLYQUERIES;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEOPTINDEXFILTER;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVESKEWJOIN;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVESTATSAUTOGATHER;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_CBO_ENABLED;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_INFER_BUCKET_SORT;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_SERVER2_LOGGING_OPERATION_ENABLED;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.LOCALSCRATCHDIR;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREWAREHOUSE;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORE_VALIDATE_COLUMNS;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORE_VALIDATE_CONSTRAINTS;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORE_VALIDATE_TABLES;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.SCRATCHDIR;
-
 /** HiveServerContext used by FlinkEmbeddedHiveRunner. */
 public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
 
@@ -106,18 +86,18 @@ public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
     }
 
     private void configureMiscHiveSettings() {
-        hiveConf.setBoolVar(HIVESTATSAUTOGATHER, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_STATS_AUTOGATHER, false);
 
         // Turn off CBO so we don't depend on calcite
-        hiveConf.setBoolVar(HIVE_CBO_ENABLED, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_CBO_ENABLED, false);
 
         // Disable to get rid of clean up exception when stopping the Session.
-        hiveConf.setBoolVar(HIVE_SERVER2_LOGGING_OPERATION_ENABLED, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_SERVER2_LOGGING_OPERATION_ENABLED, false);
 
-        hiveConf.setVar(HADOOPBIN, "NO_BIN!");
+        hiveConf.setVar(HiveConfVars.HADOOP_BIN, "NO_BIN!");
 
         // To avoid https://issues.apache.org/jira/browse/HIVE-13185 when loading data into tables
-        hiveConf.setBoolVar(HiveConf.ConfVars.HIVECHECKFILEFORMAT, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_CHECK_FILEFORMAT, false);
     }
 
     private void overrideHiveConf() {
@@ -133,18 +113,18 @@ public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
          * Switch off all optimizers otherwise we didn't
          * manage to contain the map reduction within this JVM.
          */
-        hiveConf.setBoolVar(HIVE_INFER_BUCKET_SORT, false);
-        hiveConf.setBoolVar(HIVEMETADATAONLYQUERIES, false);
-        hiveConf.setBoolVar(HIVEOPTINDEXFILTER, false);
-        hiveConf.setBoolVar(HIVECONVERTJOIN, false);
-        hiveConf.setBoolVar(HIVESKEWJOIN, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_INFER_BUCKET_SORT, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_METADATA_ONLY_QUERIES, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_OPT_INDEX_FILTER, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_CONVERT_JOIN, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_SKEW_JOIN, false);
 
         // Defaults to a 1000 millis sleep in. We can speed up the tests a bit by setting this to 1
         // millis instead.
         // org.apache.hadoop.hive.ql.exec.mr.HadoopJobExecHelper.
-        hiveConf.setLongVar(HiveConf.ConfVars.HIVECOUNTERSPULLINTERVAL, 1L);
+        hiveConf.setLongVar(HiveConfVars.HIVE_COUNTERS_PULL_INTERVAL, 1L);
 
-        hiveConf.setBoolVar(HiveConf.ConfVars.HIVE_RPC_QUERY_PLAN, true);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_RPC_QUERY_PLAN, true);
     }
 
     private void configureJavaSecurityRealm() {
@@ -161,7 +141,7 @@ public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
     }
 
     private void configureSupportConcurrency() {
-        hiveConf.setBoolVar(HIVE_SUPPORT_CONCURRENCY, false);
+        hiveConf.setBoolVar(HiveConfVars.HIVE_SUPPORT_CONCURRENCY, false);
     }
 
     private void configureMetaStore() {
@@ -181,15 +161,15 @@ public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
 
         // set JDO configs
         String jdoConnectionURL = "jdbc:derby:memory:" + UUID.randomUUID().toString();
-        hiveConf.setVar(METASTORECONNECTURLKEY, jdoConnectionURL + ";create=true");
+        hiveConf.setVar(HiveConfVars.METASTORE_CONNECT_URL_KEY, jdoConnectionURL + ";create=true");
 
-        hiveConf.setBoolVar(METASTORE_VALIDATE_CONSTRAINTS, true);
-        hiveConf.setBoolVar(METASTORE_VALIDATE_COLUMNS, true);
-        hiveConf.setBoolVar(METASTORE_VALIDATE_TABLES, true);
+        hiveConf.setBoolVar(HiveConfVars.METASTORE_VALIDATE_CONSTRAINTS, true);
+        hiveConf.setBoolVar(HiveConfVars.METASTORE_VALIDATE_COLUMNS, true);
+        hiveConf.setBoolVar(HiveConfVars.METASTORE_VALIDATE_TABLES, true);
 
         // disable authorization to avoid NPE
         hiveConf.set(
-                HIVE_AUTHORIZATION_MANAGER.varname,
+                HiveConfVars.HIVE_AUTHORIZATION_MANAGER.varname,
                 "org.apache.hive.hcatalog.storagehandler.DummyHCatAuthProvider");
 
         // disable notification event poll
@@ -198,10 +178,12 @@ public class FlinkEmbeddedHiveServerContext implements HiveServerContext {
 
     private void configureFileSystem() {
 
-        createAndSetFolderProperty(METASTOREWAREHOUSE, "warehouse", hiveConf, basedir);
-        createAndSetFolderProperty(SCRATCHDIR, "scratchdir", hiveConf, basedir);
-        createAndSetFolderProperty(LOCALSCRATCHDIR, "localscratchdir", hiveConf, basedir);
-        createAndSetFolderProperty(HIVEHISTORYFILELOC, "tmp", hiveConf, basedir);
+        createAndSetFolderProperty(
+                HiveConfVars.METASTORE_WAREHOUSE, "warehouse", hiveConf, basedir);
+        createAndSetFolderProperty(HiveConfVars.SCRATCH_DIR, "scratchdir", hiveConf, basedir);
+        createAndSetFolderProperty(
+                HiveConfVars.LOCAL_SCRATCH_DIR, "localscratchdir", hiveConf, basedir);
+        createAndSetFolderProperty(HiveConfVars.HIVE_HISTORY_FILE_LOC, "tmp", hiveConf, basedir);
 
         // HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS is removed from Hive 3.1.0
         hiveConf.setBoolean("hive.warehouse.subdir.inherit.perms", true);

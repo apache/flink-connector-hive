@@ -22,6 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.java.hadoop.mapred.utils.HadoopUtils;
 import org.apache.flink.connectors.hive.FlinkHiveException;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.connectors.hive.HiveDynamicTableFactory;
 import org.apache.flink.connectors.hive.HiveTableFactory;
 import org.apache.flink.connectors.hive.util.HivePartitionUtils;
@@ -213,7 +214,7 @@ public class HiveCatalog extends AbstractCatalog {
             checkArgument(
                     !isEmbeddedMetastore(this.hiveConf),
                     "Embedded metastore is not allowed. Make sure you have set a valid value for "
-                            + HiveConf.ConfVars.METASTOREURIS.toString());
+                            + HiveConfVars.METASTORE_URIS.toString());
         }
         checkArgument(!isNullOrWhitespaceOnly(hiveVersion), "hiveVersion cannot be null or empty");
         this.hiveVersion = hiveVersion;
@@ -916,9 +917,7 @@ public class HiveCatalog extends AbstractCatalog {
                                     HivePartitionUtils.createPartitionSpec(
                                             p,
                                             getHiveConf()
-                                                    .getVar(
-                                                            HiveConf.ConfVars
-                                                                    .DEFAULTPARTITIONNAME)))
+                                                    .getVar(HiveConfVars.DEFAULT_PARTITION_NAME)))
                     .collect(Collectors.toList());
         } catch (TException e) {
             throw new CatalogException(
@@ -959,9 +958,7 @@ public class HiveCatalog extends AbstractCatalog {
                                     HivePartitionUtils.createPartitionSpec(
                                             p,
                                             getHiveConf()
-                                                    .getVar(
-                                                            HiveConf.ConfVars
-                                                                    .DEFAULTPARTITIONNAME)))
+                                                    .getVar(HiveConfVars.DEFAULT_PARTITION_NAME)))
                     .collect(Collectors.toList());
         } catch (TException e) {
             throw new CatalogException(
@@ -1180,7 +1177,7 @@ public class HiveCatalog extends AbstractCatalog {
             } else {
                 String value = spec.get(key);
                 if (value == null) {
-                    value = getHiveConf().getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME);
+                    value = getHiveConf().getVar(HiveConfVars.DEFAULT_PARTITION_NAME);
                 }
                 values.add(value);
             }
@@ -1603,7 +1600,7 @@ public class HiveCatalog extends AbstractCatalog {
         List<String> partitionCols = getFieldNames(hiveTable.getPartitionKeys());
         List<String> partitionVals =
                 getOrderedFullPartitionValues(partitionSpec, partitionCols, tablePath);
-        String defaultPartName = getHiveConf().getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME);
+        String defaultPartName = getHiveConf().getVar(HiveConfVars.DEFAULT_PARTITION_NAME);
         return FileUtils.makePartName(partitionCols, partitionVals, defaultPartName);
     }
 
@@ -1699,7 +1696,7 @@ public class HiveCatalog extends AbstractCatalog {
                     FileUtils.makePartName(
                             getFieldNames(hiveTable.getPartitionKeys()),
                             partition.getValues(),
-                            getHiveConf().getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME)),
+                            getHiveConf().getVar(HiveConfVars.DEFAULT_PARTITION_NAME)),
                     partition);
         }
         List<Partition> orderedPartitions = new ArrayList<>(partitions.size());
@@ -1787,7 +1784,7 @@ public class HiveCatalog extends AbstractCatalog {
                                 hiveTable,
                                 partitionName,
                                 hiveTable.getPartitionKeys(),
-                                getHiveConf().getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME));
+                                getHiveConf().getVar(HiveConfVars.DEFAULT_PARTITION_NAME));
 
                 // get statistic for non-partition columns
                 Map<String, CatalogColumnStatisticsDataBase> nonPartitionColumnStatistics =
@@ -1958,7 +1955,7 @@ public class HiveCatalog extends AbstractCatalog {
 
     @Internal
     public static boolean isEmbeddedMetastore(HiveConf hiveConf) {
-        return isNullOrWhitespaceOnly(hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS));
+        return isNullOrWhitespaceOnly(hiveConf.getVar(HiveConfVars.METASTORE_URIS));
     }
 
     private static Database alterDatabase(Database hiveDB, CatalogDatabase newDatabase) {

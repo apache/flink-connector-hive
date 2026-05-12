@@ -55,7 +55,6 @@ import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
-import org.apache.hadoop.hive.ql.lib.DefaultRuleDispatcher;
 import org.apache.hadoop.hive.ql.lib.Dispatcher;
 import org.apache.hadoop.hive.ql.lib.GraphWalker;
 import org.apache.hadoop.hive.ql.lib.Node;
@@ -73,8 +72,8 @@ import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
 import org.apache.hadoop.hive.ql.udf.SettableUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBaseCompare;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFCoalesce;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFInternalInterval;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFNvl;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPAnd;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPDivide;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqual;
@@ -285,7 +284,8 @@ public class HiveParserTypeCheckProcFactory {
 
         // The dispatcher fires the processor corresponding to the closest matching
         // rule and passes the context along
-        Dispatcher disp = new DefaultRuleDispatcher(tf.getDefaultExprProcessor(), opRules, tcCtx);
+        Dispatcher disp =
+                new HiveParserRuleDispatcher(tf.getDefaultExprProcessor(), opRules, tcCtx);
         GraphWalker ogw = new HiveParserExpressionWalker(disp);
 
         // Create a list of top nodes
@@ -1215,10 +1215,14 @@ public class HiveParserTypeCheckProcFactory {
                     }
                     desc = ExprNodeGenericFuncDesc.newInstance(genericUDF, funcText, children);
                 } else if (ctx.isFoldExpr() && canConvertIntoNvl(genericUDF, children)) {
-                    // Rewrite CASE into NVL
+                    // Rewrite CASE into NVL. Uses GenericUDFCoalesce instead of
+                    // GenericUDFNvl because Hive 4 removed NVL as a redundant
+                    // special case of COALESCE. With 2 args, COALESCE(a, b) is
+                    // identical to NVL(a, b). GenericUDFCoalesce exists in all
+                    // Hive versions so this is safe for pre-4.0 as well.
                     desc =
                             ExprNodeGenericFuncDesc.newInstance(
-                                    new GenericUDFNvl(),
+                                    new GenericUDFCoalesce(),
                                     new ArrayList<>(
                                             Arrays.asList(
                                                     children.get(0),

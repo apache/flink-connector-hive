@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.delegation.hive;
 
 import org.apache.flink.connectors.hive.FlinkHiveException;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.catalog.hive.client.HiveMetastoreClientWrapper;
 import org.apache.flink.table.catalog.hive.client.HiveShim;
 import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
@@ -236,13 +237,17 @@ public class HiveParserUtils {
                                 ((MapTypeInfo) typeInfo).getMapValueTypeInfo(), relTypeFactory);
                 return relTypeFactory.createMapType(keyType, valType);
             case STRUCT:
-                List<TypeInfo> types = ((StructTypeInfo) typeInfo).getAllStructFieldTypeInfos();
+                List<TypeInfo> types =
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldTypeInfos((StructTypeInfo) typeInfo);
                 List<RelDataType> convertedTypes = new ArrayList<>(types.size());
                 for (TypeInfo type : types) {
                     convertedTypes.add(toRelDataType(type, relTypeFactory));
                 }
                 return relTypeFactory.createStructType(
-                        convertedTypes, ((StructTypeInfo) typeInfo).getAllStructFieldNames());
+                        convertedTypes,
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldNames((StructTypeInfo) typeInfo));
             case UNION:
             default:
                 throw new SemanticException(
@@ -686,7 +691,7 @@ public class HiveParserUtils {
      * is a string with all alphabets/digits and "_".
      */
     public static boolean isRegex(String pattern, HiveConf conf) {
-        String qIdSupport = HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_QUOTEDID_SUPPORT);
+        String qIdSupport = HiveConf.getVar(conf, HiveConfVars.HIVE_QUOTEDID_SUPPORT);
         if ("column".equals(qIdSupport)) {
             return false;
         }

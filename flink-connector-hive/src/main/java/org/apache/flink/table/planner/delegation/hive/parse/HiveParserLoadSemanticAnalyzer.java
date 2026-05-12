@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.delegation.hive.parse;
 
 import org.apache.flink.connectors.hive.FlinkHiveException;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.catalog.CatalogRegistry;
 import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.hive.HiveCatalog;
@@ -174,7 +175,7 @@ public class HiveParserLoadSemanticAnalyzer {
 
         // for managed tables, make sure the file formats match
         if (TableType.MANAGED_TABLE.equals(table.getTableType())
-                && conf.getBoolVar(HiveConf.ConfVars.HIVECHECKFILEFORMAT)) {
+                && conf.getBoolVar(HiveConfVars.HIVE_CHECK_FILEFORMAT)) {
             ensureFileFormatsMatch(ts, table, files, fromURI);
         }
 

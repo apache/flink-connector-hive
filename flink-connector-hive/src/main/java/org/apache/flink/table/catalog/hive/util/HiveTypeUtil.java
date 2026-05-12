@@ -21,6 +21,7 @@ package org.apache.flink.table.catalog.hive.util;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
+import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.BigIntType;
@@ -135,8 +136,12 @@ public class HiveTypeUtil {
             case STRUCT:
                 StructTypeInfo structTypeInfo = (StructTypeInfo) hiveType;
 
-                List<String> names = structTypeInfo.getAllStructFieldNames();
-                List<TypeInfo> typeInfos = structTypeInfo.getAllStructFieldTypeInfos();
+                List<String> names =
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldNames(structTypeInfo);
+                List<TypeInfo> typeInfos =
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldTypeInfos(structTypeInfo);
 
                 DataTypes.Field[] fields = new DataTypes.Field[names.size()];
 

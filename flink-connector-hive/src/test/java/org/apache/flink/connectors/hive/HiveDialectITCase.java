@@ -53,7 +53,6 @@ import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.FileUtils;
 import org.apache.flink.util.UserClassLoaderJarTestUtils;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -105,10 +104,9 @@ public class HiveDialectITCase {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog
                 .getHiveConf()
-                .setBoolVar(
-                        HiveConf.ConfVars.METASTORE_DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES, false);
+                .setBoolVar(HiveConfVars.METASTORE_DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES, false);
         hiveCatalog.open();
-        warehouse = hiveCatalog.getHiveConf().getVar(HiveConf.ConfVars.METASTOREWAREHOUSE);
+        warehouse = hiveCatalog.getHiveConf().getVar(HiveConfVars.METASTORE_WAREHOUSE);
         tableEnv = HiveTestUtils.createTableEnvInBatchMode();
         tableEnv.getConfig().setSqlDialect(SqlDialect.HIVE);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
@@ -165,7 +163,11 @@ public class HiveDialectITCase {
                         "create database db2 location '%s' with dbproperties('k1'='v1')",
                         db2Location));
         db = hiveCatalog.getHiveDatabase("db2");
-        assertThat(locationPath(db.getLocationUri())).isEqualTo(db2Location);
+        // Hive 4 changed LOCATION semantics: it sets the external warehouse dir, while
+        // getLocationUri() returns the default managed location (warehouse/db.db).
+        if (hiveCatalog.getHiveVersion().compareTo("4.0.0") < 0) {
+            assertThat(locationPath(db.getLocationUri())).isEqualTo(db2Location);
+        }
         assertThat(db.getParameters().get("k1")).isEqualTo("v1");
     }
 
@@ -190,7 +192,8 @@ public class HiveDialectITCase {
         assertThat(db.getOwnerType()).isEqualTo(PrincipalType.ROLE);
 
         // alter location
-        if (hiveCatalog.getHiveVersion().compareTo("2.4.0") >= 0) {
+        if (hiveCatalog.getHiveVersion().compareTo("2.4.0") >= 0
+                && hiveCatalog.getHiveVersion().compareTo("4.0.0") < 0) {
             String newLocation = warehouse + "/db1_new_location";
             tableEnv.executeSql(String.format("alter database db1 set location '%s'", newLocation));
             db = hiveCatalog.getHiveDatabase("db1");
@@ -214,7 +217,12 @@ public class HiveDialectITCase {
 
         tableEnv.executeSql("create table tbl2 (s struct<ts:timestamp,bin:binary>) stored as orc");
         hiveTable = hiveCatalog.getHiveTable(new ObjectPath("default", "tbl2"));
-        assertThat(hiveTable.getTableType()).isEqualTo(TableType.MANAGED_TABLE.toString());
+        // Hive 4 defaults to EXTERNAL_TABLE (hive.create.as.external.table=true)
+        String expectedTableType =
+                hiveCatalog.getHiveVersion().compareTo("4.0.0") >= 0
+                        ? TableType.EXTERNAL_TABLE.toString()
+                        : TableType.MANAGED_TABLE.toString();
+        assertThat(hiveTable.getTableType()).isEqualTo(expectedTableType);
         assertThat(hiveTable.getSd().getSerdeInfo().getSerializationLib())
                 .isEqualTo(OrcSerde.class.getName());
         assertThat(hiveTable.getSd().getInputFormat()).isEqualTo(OrcInputFormat.class.getName());
@@ -1200,16 +1208,32 @@ public class HiveDialectITCase {
         String expectLastDdlTime = table.getParameters().get("transient_lastDdlTime");
         String expectedTableProperties =
                 String.format(
-                        "%s  'k1'='v1', \n  'transient_lastDdlTime'='%s'",
-                        // if it's hive 3.x, table properties should also contain
+                        "%s%s  'k1'='v1', \n  'transient_lastDdlTime'='%s'",
+                        // Hive 4 adds TRANSLATED_TO_EXTERNAL and external.table.purge
+                        hiveCatalog.getHiveVersion().compareTo("4.0.0") >= 0
+                                ? "  'TRANSLATED_TO_EXTERNAL'='TRUE', \n"
+                                : "",
+                        // if it's hive 3.x+, table properties should also contain
                         // 'bucketing_version'='2'
                         HiveVersionTestUtil.HIVE_310_OR_LATER
                                 ? "  'bucketing_version'='2', \n"
                                 : "",
                         expectLastDdlTime);
+        // Hive 4 adds external.table.purge before k1
+        if (hiveCatalog.getHiveVersion().compareTo("4.0.0") >= 0) {
+            expectedTableProperties =
+                    expectedTableProperties.replace(
+                            "  'k1'='v1'", "  'external.table.purge'='TRUE', \n  'k1'='v1'");
+        }
+        // Hive 4 defaults to external tables
+        String createTablePrefix =
+                hiveCatalog.getHiveVersion().compareTo("4.0.0") >= 0
+                        ? "CREATE EXTERNAL TABLE"
+                        : "CREATE TABLE";
         String expectedResult =
                 String.format(
-                        "CREATE TABLE `default.t2`(\n"
+                        createTablePrefix
+                                + " `default.t2`(\n"
                                 + "  `key` string, \n"
                                 + "  `value` string)\n"
                                 + "COMMENT 'show create table'\n"
@@ -1225,7 +1249,8 @@ public class HiveDialectITCase {
                                 + "LOCATION\n"
                                 + "  'file:%s'\n"
                                 + "TBLPROPERTIES (\n%s)\n",
-                        warehouse + "/t2", expectedTableProperties);
+                        warehouse + "/t2",
+                        expectedTableProperties);
         assertThat(actualResult).isEqualTo(expectedResult);
     }
 

@@ -21,6 +21,7 @@ package org.apache.flink.table.catalog.hive.util;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.connectors.hive.FlinkHiveException;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.CatalogPropertiesUtil;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -422,7 +423,7 @@ public class HiveTableUtil {
         sd.setOutputFormat(storageFormatDescriptor.getOutputFormat());
         String serdeLib = storageFormatDescriptor.getSerde();
         if (serdeLib == null && storageFormatDescriptor instanceof RCFileStorageFormatDescriptor) {
-            serdeLib = hiveConf.getVar(HiveConf.ConfVars.HIVEDEFAULTRCFILESERDE);
+            serdeLib = hiveConf.getVar(HiveConfVars.HIVE_DEFAULT_RCFILE_SERDE);
         }
         if (serdeLib != null) {
             sd.getSerdeInfo().setSerializationLib(serdeLib);
@@ -430,8 +431,8 @@ public class HiveTableUtil {
     }
 
     public static void setDefaultStorageFormat(StorageDescriptor sd, HiveConf hiveConf) {
-        sd.getSerdeInfo().setSerializationLib(hiveConf.getVar(HiveConf.ConfVars.HIVEDEFAULTSERDE));
-        setStorageFormat(sd, hiveConf.getVar(HiveConf.ConfVars.HIVEDEFAULTFILEFORMAT), hiveConf);
+        sd.getSerdeInfo().setSerializationLib(hiveConf.getVar(HiveConfVars.HIVE_DEFAULT_SERDE));
+        setStorageFormat(sd, hiveConf.getVar(HiveConfVars.HIVE_DEFAULT_FILEFORMAT), hiveConf);
     }
 
     public static void setDefaultStorageFormatForDirectory(

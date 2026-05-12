@@ -71,7 +71,11 @@ public class HiveModuleTest {
     }
 
     private void verifyNumBuiltInFunctions(String hiveVersion, HiveModule hiveModule) {
-        if (HiveVersionTestUtil.HIVE_310_OR_LATER) {
+        if (HiveVersionTestUtil.HIVE_400_OR_LATER) {
+            // Hive 4.x has significantly more builtins; count varies per minor version
+            // (4.0.0=482, 4.1.0=484, 4.2.0=488)
+            assertThat(hiveModule.listFunctions()).hasSizeGreaterThanOrEqualTo(482);
+        } else if (HiveVersionTestUtil.HIVE_310_OR_LATER) {
             assertThat(hiveModule.listFunctions()).hasSize(297);
         } else if (HiveVersionTestUtil.HIVE_230_OR_LATER) {
             assertThat(hiveModule.listFunctions()).hasSize(277);
@@ -127,7 +131,8 @@ public class HiveModuleTest {
                         tEnv.sqlQuery("select concat('ab',cast(12.34 as decimal(10,5)))")
                                 .execute()
                                 .collect());
-        assertThat(results.toString()).isEqualTo("[ab12.34]");
+        assertThat(results.toString())
+                .isIn("[ab12.34]", "[ab12.34000]"); // Hive 4 preserves decimal scale
 
         results =
                 CollectionUtil.iteratorToList(

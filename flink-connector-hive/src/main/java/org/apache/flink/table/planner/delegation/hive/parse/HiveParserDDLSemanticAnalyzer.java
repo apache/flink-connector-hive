@@ -20,6 +20,7 @@ package org.apache.flink.table.planner.delegation.hive.parse;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.calcite.bridge.CalciteContext;
@@ -125,13 +126,12 @@ import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.ColumnInfo;
 import org.apache.hadoop.hive.ql.exec.FunctionUtils;
+import org.apache.hadoop.hive.ql.lib.Dispatcher;
 import org.apache.hadoop.hive.ql.lib.Node;
-import org.apache.hadoop.hive.ql.lib.PreOrderWalker;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
-import org.apache.hadoop.hive.ql.plan.PrincipalDesc;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFMacro;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
@@ -292,16 +292,13 @@ public class HiveParserDDLSemanticAnalyzer {
         this.functionCatalog = calciteContext.getFunctionCatalog();
         reservedPartitionValues = new HashSet<>();
         // Partition can't have this name
-        reservedPartitionValues.add(HiveConf.getVar(conf, HiveConf.ConfVars.DEFAULTPARTITIONNAME));
+        reservedPartitionValues.add(HiveConf.getVar(conf, HiveConfVars.DEFAULT_PARTITION_NAME));
         reservedPartitionValues.add(
-                HiveConf.getVar(conf, HiveConf.ConfVars.DEFAULT_ZOOKEEPER_PARTITION_NAME));
+                HiveConf.getVar(conf, HiveConfVars.DEFAULT_ZOOKEEPER_PARTITION_NAME));
         // Partition value can't end in this suffix
-        reservedPartitionValues.add(
-                HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_INT_ORIGINAL));
-        reservedPartitionValues.add(
-                HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_INT_ARCHIVED));
-        reservedPartitionValues.add(
-                HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_INT_EXTRACTED));
+        reservedPartitionValues.add(HiveConf.getVar(conf, HiveConfVars.METASTORE_INT_ORIGINAL));
+        reservedPartitionValues.add(HiveConf.getVar(conf, HiveConfVars.METASTORE_INT_ARCHIVED));
+        reservedPartitionValues.add(HiveConf.getVar(conf, HiveConfVars.METASTORE_INT_EXTRACTED));
     }
 
     private Table getTable(ObjectPath tablePath) {
@@ -630,18 +627,17 @@ public class HiveParserDDLSemanticAnalyzer {
             // Walk down expression to see which arguments are actually used.
             Node expression = (Node) ast.getChild(2);
 
-            PreOrderWalker walker =
-                    new PreOrderWalker(
-                            (nd, stack, nodeOutputs) -> {
-                                if (nd instanceof HiveParserASTNode) {
-                                    HiveParserASTNode node = (HiveParserASTNode) nd;
-                                    if (node.getType() == HiveASTParser.TOK_TABLE_OR_COL) {
-                                        actualColumnNames.add(node.getChild(0).getText());
-                                    }
-                                }
-                                return null;
-                            });
-            walker.startWalking(Collections.singleton(expression), null);
+            Dispatcher dispatcher =
+                    (nd, stack, nodeOutputs) -> {
+                        if (nd instanceof HiveParserASTNode) {
+                            HiveParserASTNode node = (HiveParserASTNode) nd;
+                            if (node.getType() == HiveASTParser.TOK_TABLE_OR_COL) {
+                                actualColumnNames.add(node.getChild(0).getText());
+                            }
+                        }
+                        return null;
+                    };
+            hiveShim.walkExpressionTree(expression, dispatcher);
         }
         return actualColumnNames;
     }
@@ -1272,23 +1268,32 @@ public class HiveParserDDLSemanticAnalyzer {
         String dbName =
                 HiveParserBaseSemanticAnalyzer.getUnescapedName(
                         (HiveParserASTNode) ast.getChild(0));
-        PrincipalDesc principalDesc =
+        Object principalDesc =
                 HiveParserAuthorizationParseUtils.getPrincipalDesc(
-                        (HiveParserASTNode) ast.getChild(1));
+                        hiveShim, (HiveParserASTNode) ast.getChild(1));
 
         // The syntax should not allow these fields to be null, but lets verify
         String nullCmdMsg = "can't be null in alter database set owner command";
-        if (principalDesc.getName() == null) {
+        String ownerName;
+        Object ownerType;
+        try {
+            ownerName =
+                    (String) principalDesc.getClass().getMethod("getName").invoke(principalDesc);
+            ownerType = principalDesc.getClass().getMethod("getType").invoke(principalDesc);
+        } catch (Exception e) {
+            throw new SemanticException("Failed to read PrincipalDesc", e);
+        }
+        if (ownerName == null) {
             throw new ValidationException("Owner name " + nullCmdMsg);
         }
-        if (principalDesc.getType() == null) {
+        if (ownerType == null) {
             throw new ValidationException("Owner type " + nullCmdMsg);
         }
         CatalogDatabase originDB = getDatabase(dbName);
         Map<String, String> props = new HashMap<>(originDB.getProperties());
         props.put(ALTER_DATABASE_OP, AlterHiveDatabaseOp.CHANGE_OWNER.name());
-        props.put(DATABASE_OWNER_NAME, principalDesc.getName());
-        props.put(DATABASE_OWNER_TYPE, principalDesc.getType().name().toLowerCase());
+        props.put(DATABASE_OWNER_NAME, ownerName);
+        props.put(DATABASE_OWNER_TYPE, ownerType.toString().toLowerCase());
         CatalogDatabase newDB = new CatalogDatabaseImpl(props, originDB.getComment());
         return new AlterDatabaseOperation(catalogRegistry.getCurrentCatalog(), dbName, newDB);
     }
@@ -1798,9 +1803,7 @@ public class HiveParserDDLSemanticAnalyzer {
             spec = new CatalogPartitionSpec(new HashMap<>(partSpec));
         }
         return new ShowPartitionsOperation(
-                tableIdentifier,
-                spec,
-                HiveConf.getVar(conf, HiveConf.ConfVars.DEFAULTPARTITIONNAME));
+                tableIdentifier, spec, HiveConf.getVar(conf, HiveConfVars.DEFAULT_PARTITION_NAME));
     }
 
     private Operation convertShowDatabases(String catalogName) {
@@ -2271,7 +2274,7 @@ public class HiveParserDDLSemanticAnalyzer {
         } else {
             retValue = tblProp;
         }
-        String paraString = HiveConf.getVar(conf, HiveConf.ConfVars.NEWTABLEDEFAULTPARA);
+        String paraString = HiveConf.getVar(conf, HiveConfVars.NEW_TABLE_DEFAULT_PARA);
         if (paraString != null && !paraString.isEmpty()) {
             for (String keyValuePair : paraString.split(",")) {
                 String[] keyValue = keyValuePair.split("=", 2);

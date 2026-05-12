@@ -59,9 +59,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_IN_TEST;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_TXN_MANAGER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -83,10 +80,13 @@ public class HiveRunnerITCase {
                     // catalog lock needs txn manager
                     // hive-3.x requires a proper txn manager to create ACID table
                     getHiveConfSystemOverride()
-                            .put(HIVE_TXN_MANAGER.varname, DbTxnManager.class.getName());
-                    getHiveConfSystemOverride().put(HIVE_SUPPORT_CONCURRENCY.varname, "true");
+                            .put(
+                                    HiveConfVars.HIVE_TXN_MANAGER.varname,
+                                    DbTxnManager.class.getName());
+                    getHiveConfSystemOverride()
+                            .put(HiveConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "true");
                     // tell TxnHandler to prepare txn DB
-                    getHiveConfSystemOverride().put(HIVE_IN_TEST.varname, "true");
+                    getHiveConfSystemOverride().put(HiveConfVars.HIVE_IN_TEST.varname, "true");
                 }
             };
 
@@ -648,7 +648,7 @@ public class HiveRunnerITCase {
                             .addRow(new Object[] {"a", "b"})
                             .addRow(new Object[] {"c", "d"})
                             .commit();
-                    hiveCatalog.getHiveConf().setBoolVar(HiveConf.ConfVars.COMPRESSRESULT, true);
+                    hiveCatalog.getHiveConf().setBoolVar(HiveConfVars.COMPRESS_RESULT, true);
                     tableEnv.executeSql("insert into db1.dest select * from db1.src").await();
                     List<String> expected = Arrays.asList("a\tb", "c\td");
                     verifyHiveQueryResult("select * from db1.dest", expected);
