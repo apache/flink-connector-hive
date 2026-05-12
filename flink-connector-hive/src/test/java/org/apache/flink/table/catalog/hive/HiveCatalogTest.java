@@ -44,6 +44,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -338,6 +339,35 @@ public class HiveCatalogTest {
                         .getPath();
         hiveConf = HiveCatalog.createHiveConf(hiveConfDir, null);
         assertThat(hiveConf.get("common-key")).isNull();
+    }
+
+    @Test
+    public void testCreateHiveConfRestoresStaticSettings() throws Exception {
+        // backup originals
+        URL originalHiveSiteURL = HiveConf.getHiveSiteLocation();
+        boolean originalLoadMetastoreConfig = HiveConf.isLoadMetastoreConfig();
+        boolean originalLoadHiveServer2Config = HiveConf.isLoadHiveServer2Config();
+
+        try {
+            // set distinct values
+            URL testUrl = new URL("file:/tmp/test-hive-site.xml");
+            HiveConf.setHiveSiteLocation(testUrl);
+            HiveConf.setLoadMetastoreConfig(true);
+            HiveConf.setLoadHiveServer2Config(true);
+
+            // call the method under test
+            HiveConf hiveConf = HiveCatalog.createHiveConf(null, null);
+
+            // static settings should be restored to the values we set
+            assertThat(HiveConf.getHiveSiteLocation()).isEqualTo(testUrl);
+            assertThat(HiveConf.isLoadMetastoreConfig()).isTrue();
+            assertThat(HiveConf.isLoadHiveServer2Config()).isTrue();
+        } finally {
+            // restore originals to avoid affecting other tests
+            HiveConf.setHiveSiteLocation(originalHiveSiteURL);
+            HiveConf.setLoadMetastoreConfig(originalLoadMetastoreConfig);
+            HiveConf.setLoadHiveServer2Config(originalLoadHiveServer2Config);
+        }
     }
 
     @Test
