@@ -588,26 +588,6 @@ public class HiveRunnerITCase {
                 });
     }
 
-    @Test
-    public void testCatalogLock() throws Exception {
-        TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.DEFAULT);
-        tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
-        tableEnv.useCatalog(hiveCatalog.getName());
-
-        TableEnvExecutorUtil.executeInSeparateDatabase(
-                tableEnv,
-                true,
-                () -> {
-                    tableEnv.executeSql(
-                            "create table src (x int) with ('connector'='datagen','number-of-rows'='2')");
-                    tableEnv.executeSql(
-                            "create table lock_t (x int) with ('connector'='test-lock')");
-
-                    // see TestLockTableSinkFactory
-                    tableEnv.executeSql("insert into lock_t select * from src").await();
-                });
-    }
-
     private void testTransactionalTable(boolean batch) throws Exception {
         TableEnvironment tableEnv =
                 batch ? getTableEnvWithHiveCatalog() : getStreamTableEnvWithHiveCatalog();

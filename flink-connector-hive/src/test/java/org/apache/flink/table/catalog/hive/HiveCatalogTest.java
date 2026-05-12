@@ -33,7 +33,6 @@ import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.hive.util.HiveTableUtil;
 import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.ManagedTableFactory;
 import org.apache.flink.table.resource.ResourceType;
 import org.apache.flink.table.resource.ResourceUri;
 
@@ -51,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.flink.table.catalog.CatalogPropertiesUtil.FLINK_PROPERTY_PREFIX;
 import static org.apache.flink.table.catalog.hive.util.Constants.IDENTIFIER;
 import static org.apache.flink.table.factories.FactoryUtil.CONNECTOR;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,26 +84,6 @@ public class HiveCatalogTest {
     @After
     public void after() throws Exception {
         hiveCatalog.dropTable(tablePath, true);
-    }
-
-    @Test
-    public void testCreateAndGetFlinkManagedTable() throws Exception {
-        CatalogTable table =
-                new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                schema,
-                                "Flink managed table",
-                                new ArrayList<>(),
-                                Collections.emptyMap()),
-                        resolvedSchema);
-        hiveCatalog.createTable(tablePath, table, false);
-        Table hiveTable = hiveCatalog.getHiveTable(tablePath);
-        assertThat(hiveTable.getParameters())
-                .containsEntry(
-                        FLINK_PROPERTY_PREFIX + CONNECTOR.key(),
-                        ManagedTableFactory.DEFAULT_IDENTIFIER);
-        CatalogBaseTable retrievedTable = hiveCatalog.instantiateCatalogTable(hiveTable);
-        assertThat(retrievedTable.getOptions()).isEmpty();
     }
 
     @Test
@@ -273,8 +251,7 @@ public class HiveCatalogTest {
                                         new ArrayList<>(),
                                         getLegacyFileSystemConnectorOptions("/test_path")),
                                 resolvedSchema),
-                        HiveTestUtils.createHiveConf(),
-                        false);
+                        HiveTestUtils.createHiveConf());
 
         Map<String, String> prop = hiveTable.getParameters();
         assertThat(HiveCatalog.isHiveTable(prop)).isFalse();
@@ -293,8 +270,7 @@ public class HiveCatalogTest {
                         new ResolvedCatalogTable(
                                 CatalogTable.of(schema, null, new ArrayList<>(), options),
                                 resolvedSchema),
-                        HiveTestUtils.createHiveConf(),
-                        false);
+                        HiveTestUtils.createHiveConf());
 
         Map<String, String> prop = hiveTable.getParameters();
         assertThat(HiveCatalog.isHiveTable(prop)).isTrue();
