@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFMin;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFSum;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -45,9 +45,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /** Test for {@link HiveGenericUDAF}. */
-public class HiveGenericUDAFTest {
+class HiveGenericUDAFTest {
     @Test
-    public void testUDAFMin() throws Exception {
+    void testUDAFMin() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] argTypes = new DataType[] {DataTypes.BIGINT()};
@@ -66,7 +66,7 @@ public class HiveGenericUDAFTest {
     }
 
     @Test
-    public void testUDAFSum() throws Exception {
+    void testUDAFSum() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] argTypes = new DataType[] {DataTypes.DOUBLE()};
@@ -101,7 +101,7 @@ public class HiveGenericUDAFTest {
     }
 
     @Test
-    public void testUDAFCount() throws Exception {
+    void testUDAFCount() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] argTypes = new DataType[] {DataTypes.DOUBLE()};
@@ -120,7 +120,7 @@ public class HiveGenericUDAFTest {
     }
 
     @Test
-    public void testUDAFResolver() throws Exception {
+    void testUDAFResolver() throws Exception {
         // test the Hive's UDAF that implement deprecated GenericUDAFResolver interface
         Object[] constantArgs = new Object[] {null, null, null};
         DataType[] argTypes =
@@ -143,7 +143,7 @@ public class HiveGenericUDAFTest {
     }
 
     @Test
-    public void testUDAFWithSingleArrayAsParameter() throws Exception {
+    void testUDAFWithSingleArrayAsParameter() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] argTypes = new DataType[] {DataTypes.ARRAY(DataTypes.INT().notNull())};

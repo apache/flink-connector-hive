@@ -33,17 +33,17 @@ import org.apache.flink.util.CollectionUtil;
 
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for HiveInputFormatPartitionReader. */
-public class HiveInputFormatPartitionReaderITCase {
+class HiveInputFormatPartitionReaderITCase {
 
     @Test
-    public void testReadMultipleSplits() throws Exception {
+    void testReadMultipleSplits() throws Exception {
         HiveCatalog hiveCatalog = HiveTestUtils.createHiveCatalog();
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);

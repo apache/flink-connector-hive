@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -352,5 +353,11 @@ public class HiveTestUtils {
     /** Derive the dataType from the {@link Schema.UnresolvedColumn}. */
     public static DataType getType(Schema.UnresolvedColumn column) {
         return (DataType) ((Schema.UnresolvedPhysicalColumn) column).getDataType();
+    }
+
+    /** Creates a subdirectory under the given temp folder, creating parent dirs as needed. */
+    public static File createTempSubDir(java.nio.file.Path tempFolder, String name)
+            throws IOException {
+        return Files.createDirectories(tempFolder.resolve(name)).toFile();
     }
 }

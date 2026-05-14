@@ -40,7 +40,7 @@ import org.apache.flink.table.functions.hive.util.TestHiveUDTF;
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase;
 import org.apache.flink.table.planner.runtime.utils.TestingRetractSink;
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil;
-import org.apache.flink.test.util.AbstractTestBaseJUnit4;
+import org.apache.flink.test.util.AbstractTestBase;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.FileUtils;
@@ -48,11 +48,10 @@ import org.apache.flink.util.FileUtils;
 import org.apache.hadoop.hive.ql.udf.UDFMonth;
 import org.apache.hadoop.hive.ql.udf.UDFYear;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFSum;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,30 +74,30 @@ import static org.assertj.core.api.Assertions.assertThat;
  * IT case for HiveCatalog. TODO: move to flink-connector-hive-test end-to-end test module once it's
  * setup
  */
-public class HiveCatalogUdfITCase extends AbstractTestBaseJUnit4 {
+class HiveCatalogUdfITCase extends AbstractTestBase {
 
-    @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir Path tempFolder;
 
     private static HiveCatalog hiveCatalog;
 
     private final String sourceTableName = "csv_source";
     private final String sinkTableName = "csv_sink";
 
-    @BeforeClass
-    public static void createCatalog() {
+    @BeforeAll
+    static void createCatalog() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
     }
 
-    @AfterClass
-    public static void closeCatalog() {
+    @AfterAll
+    static void closeCatalog() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
     }
 
     @Test
-    public void testFlinkUdf() throws Exception {
+    void testFlinkUdf() throws Exception {
         final ResolvedSchema schema =
                 ResolvedSchema.of(
                         Column.physical("name", DataTypes.STRING()),
@@ -173,7 +172,10 @@ public class HiveCatalogUdfITCase extends AbstractTestBaseJUnit4 {
 
         List<String> results;
         if (batch) {
-            Path p = Paths.get(tempFolder.newFolder().getAbsolutePath(), "test.csv");
+            Path p =
+                    Paths.get(
+                            HiveTestUtils.createTempSubDir(tempFolder, "batch").toString(),
+                            "test.csv");
 
             final ResolvedSchema sinkSchema =
                     ResolvedSchema.of(
@@ -238,7 +240,7 @@ public class HiveCatalogUdfITCase extends AbstractTestBaseJUnit4 {
     }
 
     @Test
-    public void testTimestampUDF() throws Exception {
+    void testTimestampUDF() throws Exception {
 
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
@@ -265,7 +267,7 @@ public class HiveCatalogUdfITCase extends AbstractTestBaseJUnit4 {
     }
 
     @Test
-    public void testDateUDF() throws Exception {
+    void testDateUDF() throws Exception {
 
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);

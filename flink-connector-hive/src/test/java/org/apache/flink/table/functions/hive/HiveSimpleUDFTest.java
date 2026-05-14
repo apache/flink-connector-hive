@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.ql.udf.UDFRegExpExtract;
 import org.apache.hadoop.hive.ql.udf.UDFToInteger;
 import org.apache.hadoop.hive.ql.udf.UDFUnhex;
 import org.apache.hadoop.hive.ql.udf.UDFWeekOfYear;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -47,35 +47,35 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HiveSimpleUDF}. */
-public class HiveSimpleUDFTest {
+class HiveSimpleUDFTest {
     private static HiveShim hiveShim = HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion());
 
     @Test
-    public void testBooleanUDF() {
+    void testBooleanUDF() {
         HiveSimpleUDF udf = init(BooleanUDF.class, new DataType[] {DataTypes.INT()});
         assertThat((boolean) udf.eval(1)).isTrue();
     }
 
     @Test
-    public void testFloatUDF() {
+    void testFloatUDF() {
         HiveSimpleUDF udf = init(FloatUDF.class, new DataType[] {DataTypes.FLOAT()});
         assertThat((float) udf.eval(3.0f)).isEqualTo(3.0f);
     }
 
     @Test
-    public void testIntUDF() {
+    void testIntUDF() {
         HiveSimpleUDF udf = init(IntUDF.class, new DataType[] {DataTypes.INT()});
         assertThat((int) udf.eval(3)).isEqualTo(3);
     }
 
     @Test
-    public void testStringUDF() {
+    void testStringUDF() {
         HiveSimpleUDF udf = init(StringUDF.class, new DataType[] {DataTypes.STRING()});
         assertThat(udf.eval("test")).isEqualTo("test");
     }
 
     @Test
-    public void testUDFRand() {
+    void testUDFRand() {
         HiveSimpleUDF udf = init(UDFRand.class, new DataType[0]);
 
         double result = (double) udf.eval();
@@ -84,14 +84,14 @@ public class HiveSimpleUDFTest {
     }
 
     @Test
-    public void testUDFBin() {
+    void testUDFBin() {
         HiveSimpleUDF udf = init(UDFBin.class, new DataType[] {DataTypes.INT()});
 
         assertThat(udf.eval(12)).isEqualTo("1100");
     }
 
     @Test
-    public void testUDFConv() {
+    void testUDFConv() {
         HiveSimpleUDF udf =
                 init(
                         UDFConv.class,
@@ -102,7 +102,7 @@ public class HiveSimpleUDFTest {
     }
 
     @Test
-    public void testUDFJson() {
+    void testUDFJson() {
         String pattern = "$.owner";
         String json = "{\"store\": \"test\", \"owner\": \"amy\"}";
         String expected = "amy";
@@ -143,7 +143,7 @@ public class HiveSimpleUDFTest {
     }
 
     @Test
-    public void testUDFWeekOfYear() throws FlinkHiveUDFException {
+    void testUDFWeekOfYear() throws FlinkHiveUDFException {
         HiveSimpleUDF udf = init(UDFWeekOfYear.class, new DataType[] {DataTypes.STRING()});
 
         assertThat(udf.eval("1969-07-20")).isEqualTo(29);
@@ -153,7 +153,7 @@ public class HiveSimpleUDFTest {
     }
 
     @Test
-    public void testUDFRegExpExtract() {
+    void testUDFRegExpExtract() {
         HiveSimpleUDF udf =
                 init(
                         UDFRegExpExtract.class,
@@ -163,28 +163,28 @@ public class HiveSimpleUDFTest {
     }
 
     @Test
-    public void testUDFUnbase64() {
+    void testUDFUnbase64() {
         HiveSimpleUDF udf = init(UDFBase64.class, new DataType[] {DataTypes.BYTES()});
 
         assertThat(udf.eval(new byte[] {10})).isEqualTo("Cg==");
     }
 
     @Test
-    public void testUDFUnhex() throws UnsupportedEncodingException {
+    void testUDFUnhex() throws UnsupportedEncodingException {
         HiveSimpleUDF udf = init(UDFUnhex.class, new DataType[] {DataTypes.STRING()});
 
         assertThat(new String((byte[]) udf.eval("4D7953514C"), "UTF-8")).isEqualTo("MySQL");
     }
 
     @Test
-    public void testUDFToInteger() {
+    void testUDFToInteger() {
         HiveSimpleUDF udf = init(UDFToInteger.class, new DataType[] {DataTypes.DECIMAL(5, 3)});
 
         assertThat(udf.eval(BigDecimal.valueOf(1.1d))).isEqualTo(1);
     }
 
     @Test
-    public void testUDFArray_singleArray() {
+    void testUDFArray_singleArray() {
         Double[] testInputs = new Double[] {1.1d, 2.2d};
 
         // input arg is a single array

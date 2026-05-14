@@ -39,10 +39,10 @@ import org.apache.flink.table.resource.ResourceUri;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Test for HiveCatalog. */
-public class HiveCatalogTest {
+class HiveCatalogTest {
 
     ResolvedSchema resolvedSchema =
             ResolvedSchema.of(
@@ -70,26 +70,26 @@ public class HiveCatalogTest {
     private static HiveCatalog hiveCatalog;
     private final ObjectPath tablePath = new ObjectPath("default", "test");
 
-    @BeforeClass
-    public static void createCatalog() {
+    @BeforeAll
+    static void createCatalog() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
     }
 
-    @AfterClass
-    public static void closeCatalog() {
+    @AfterAll
+    static void closeCatalog() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
     }
 
-    @After
-    public void after() throws Exception {
+    @AfterEach
+    void after() throws Exception {
         hiveCatalog.dropTable(tablePath, true);
     }
 
     @Test
-    public void testCreateAndGetFlinkManagedTable() throws Exception {
+    void testCreateAndGetFlinkManagedTable() throws Exception {
         CatalogTable table =
                 new ResolvedCatalogTable(
                         CatalogTable.of(
@@ -109,7 +109,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterFlinkNonManagedTableToFlinkManagedTable() throws Exception {
+    void testAlterFlinkNonManagedTableToFlinkManagedTable() throws Exception {
         Map<String, String> originOptions =
                 Collections.singletonMap(
                         FactoryUtil.CONNECTOR.key(), DataGenTableSourceFactory.IDENTIFIER);
@@ -138,7 +138,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterFlinkNonManagedTableToHiveTable() throws Exception {
+    void testAlterFlinkNonManagedTableToHiveTable() throws Exception {
         Map<String, String> originOptions =
                 Collections.singletonMap(
                         FactoryUtil.CONNECTOR.key(), DataGenTableSourceFactory.IDENTIFIER);
@@ -166,7 +166,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterFlinkManagedTableToFlinkManagedTable() throws Exception {
+    void testAlterFlinkManagedTableToFlinkManagedTable() throws Exception {
         Map<String, String> originOptions = Collections.emptyMap();
         CatalogTable originTable =
                 new ResolvedCatalogTable(
@@ -191,7 +191,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterFlinkManagedTableToHiveTable() throws Exception {
+    void testAlterFlinkManagedTableToHiveTable() throws Exception {
         Map<String, String> originOptions = Collections.emptyMap();
         CatalogTable originTable =
                 new ResolvedCatalogTable(
@@ -214,7 +214,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterHiveTableToFlinkManagedTable() throws Exception {
+    void testAlterHiveTableToFlinkManagedTable() throws Exception {
         Map<String, String> originOptions = getLegacyFileSystemConnectorOptions("/test_path");
         originOptions.put(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
         CatalogTable originTable =
@@ -237,7 +237,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testAlterHiveTableToFlinkNonManagedTable() throws Exception {
+    void testAlterHiveTableToFlinkNonManagedTable() throws Exception {
         Map<String, String> originOptions = getLegacyFileSystemConnectorOptions("/test_path");
         originOptions.put(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
         CatalogTable originTable =
@@ -262,7 +262,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testCreateGenericTable() {
+    void testCreateGenericTable() {
         Table hiveTable =
                 HiveTableUtil.instantiateHiveTable(
                         new ObjectPath("test", "test"),
@@ -283,7 +283,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testCreateHiveTable() {
+    void testCreateHiveTable() {
         Map<String, String> options = getLegacyFileSystemConnectorOptions("/test_path");
         options.put(FactoryUtil.CONNECTOR.key(), IDENTIFIER);
 
@@ -303,7 +303,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testRetrieveFlinkProperties() throws Exception {
+    void testRetrieveFlinkProperties() throws Exception {
         ObjectPath hiveObjectPath =
                 new ObjectPath(HiveCatalog.DEFAULT_DB, "testRetrieveProperties");
 
@@ -326,7 +326,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testCreateHiveConf() {
+    void testCreateHiveConf() {
         // hive-conf-dir not specified, should read hive-site from classpath
         HiveConf hiveConf = HiveCatalog.createHiveConf(null, null);
         assertThat(hiveConf.get("common-key")).isEqualTo("common-val");
@@ -341,7 +341,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testGetNoSchemaGenericTable() throws Exception {
+    void testGetNoSchemaGenericTable() throws Exception {
         ObjectPath hiveObjectPath =
                 new ObjectPath(HiveCatalog.DEFAULT_DB, "testGetNoSchemaGenericTable");
 
@@ -362,7 +362,7 @@ public class HiveCatalogTest {
     }
 
     @Test
-    public void testFunction() throws Exception {
+    void testFunction() throws Exception {
         List<ResourceUri> resourceUris =
                 Arrays.asList(
                         new ResourceUri(ResourceType.JAR, "jar/path"),

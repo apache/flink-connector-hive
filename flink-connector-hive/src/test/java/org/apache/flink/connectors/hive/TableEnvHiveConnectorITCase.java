@@ -38,11 +38,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -54,13 +53,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test hive connector with table API. */
-public class TableEnvHiveConnectorITCase {
+class TableEnvHiveConnectorITCase {
 
     private static HiveCatalog hiveCatalog;
     private static HiveMetastoreClientWrapper hmsClient;
 
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    static void setup() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
         hmsClient =
@@ -68,10 +67,10 @@ public class TableEnvHiveConnectorITCase {
                         hiveCatalog.getHiveConf(), HiveShimLoader.getHiveVersion());
     }
 
-    @ClassRule public static TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir static java.nio.file.Path tempFolder;
 
     @Test
-    public void testOverwriteWithEmptySource() throws Exception {
+    void testOverwriteWithEmptySource() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -120,7 +119,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testMultiInputBroadcast() throws Exception {
+    void testMultiInputBroadcast() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -161,7 +160,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testDefaultPartitionName() throws Exception {
+    void testDefaultPartitionName() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -193,7 +192,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testGetNonExistingFunction() throws Exception {
+    void testGetNonExistingFunction() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -209,7 +208,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testDateTimestampPartitionColumns() throws Exception {
+    void testDateTimestampPartitionColumns() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -254,7 +253,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testUDTF() throws Exception {
+    void testUDTF() throws Exception {
         // W/o https://issues.apache.org/jira/browse/HIVE-11878 Hive registers the App classloader
         // as the classloader
         // for the UDTF and closes the App classloader when we tear down the session. This causes
@@ -264,7 +263,7 @@ public class TableEnvHiveConnectorITCase {
         // classes. And will crash the forked JVM, thus failing the test phase.
         // Therefore disable such tests for older Hive versions.
         String hiveVersion = HiveShimLoader.getHiveVersion();
-        Assume.assumeTrue(
+        Assumptions.assumeTrue(
                 hiveVersion.compareTo("2.0.0") >= 0 || hiveVersion.compareTo("1.3.0") >= 0);
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
@@ -334,8 +333,8 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testNotNullConstraints() throws Exception {
-        Assume.assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
+    void testNotNullConstraints() throws Exception {
+        Assumptions.assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -360,11 +359,11 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testPKConstraint() throws Exception {
+    void testPKConstraint() throws Exception {
         // While PK constraints are supported since Hive 2.1.0, the constraints cannot be RELY in
         // 2.x versions.
         // So let's only test for 3.x.
-        Assume.assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
+        Assumptions.assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -397,7 +396,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testRegexSerDe() throws Exception {
+    void testRegexSerDe() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -423,7 +422,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testUpdatePartitionSD() throws Exception {
+    void testUpdatePartitionSD() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.executeSql("create database db1");
         try {
@@ -447,7 +446,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testParquetNameMapping() throws Exception {
+    void testParquetNameMapping() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -481,7 +480,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testNonExistingPartitionFolder() throws Exception {
+    void testNonExistingPartitionFolder() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -516,7 +515,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testInsertPartitionWithStarSource() throws Exception {
+    void testInsertPartitionWithStarSource() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.executeSql("create table src (x int,y string)");
         HiveTestUtils.createTextTableInserter(hiveCatalog, "default", "src")
@@ -533,7 +532,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testInsertPartitionWithValuesSource() throws Exception {
+    void testInsertPartitionWithValuesSource() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.executeSql("create table dest (x int) partitioned by (p1 int,p2 string)");
         tableEnv.executeSql("insert into dest partition (p1=1,p2) values(1, 'a')").await();
@@ -545,7 +544,7 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testDynamicPartWithOrderBy() throws Exception {
+    void testDynamicPartWithOrderBy() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.executeSql("create table src(x int,y int)");
         tableEnv.executeSql("create table dest(x int) partitioned by (p int)");
@@ -568,9 +567,9 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testLocationWithComma() throws Exception {
+    void testLocationWithComma() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
-        File location = tempFolder.newFolder(",tbl1,location,");
+        File location = HiveTestUtils.createTempSubDir(tempFolder, ",tbl1,location,");
         try {
             // test table location
             tableEnv.executeSql(
@@ -583,7 +582,7 @@ public class TableEnvHiveConnectorITCase {
             assertThat(results.toString()).isEqualTo("[+I[1], +I[2]]");
             // test partition location
             tableEnv.executeSql("create table tbl2 (x int) partitioned by (p string)");
-            location = tempFolder.newFolder(",");
+            location = HiveTestUtils.createTempSubDir(tempFolder, ",");
             tableEnv.executeSql(
                     String.format(
                             "alter table tbl2 add partition (p='a') location '%s'",
@@ -609,8 +608,8 @@ public class TableEnvHiveConnectorITCase {
     }
 
     @Test
-    public void testReadEmptyCollectionFromParquet() throws Exception {
-        Assume.assumeTrue(HiveShimLoader.getHiveVersion().equals("2.0.0"));
+    void testReadEmptyCollectionFromParquet() throws Exception {
+        Assumptions.assumeTrue(HiveShimLoader.getHiveVersion().equals("2.0.0"));
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         try {
             String format = "parquet";

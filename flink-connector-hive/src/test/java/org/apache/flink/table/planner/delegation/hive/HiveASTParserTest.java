@@ -24,17 +24,17 @@ import org.apache.flink.table.planner.delegation.hive.copy.HiveParserContext;
 import org.apache.flink.table.planner.delegation.hive.parse.HiveASTParser;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the AST parser. */
-public class HiveASTParserTest {
+class HiveASTParserTest {
 
     private static final HiveConf hiveConf = HiveTestUtils.createHiveConf();
 
     @Test
-    public void testDatabase() throws Exception {
+    void testDatabase() throws Exception {
         assertDDLType(HiveASTParser.TOK_SHOWDATABASES, "show databases");
         assertDDLType(HiveASTParser.TOK_SWITCHDATABASE, "use db1");
         assertDDLType(
@@ -61,7 +61,7 @@ public class HiveASTParserTest {
     }
 
     @Test
-    public void testTable() throws Exception {
+    void testTable() throws Exception {
         assertDDLType(HiveASTParser.TOK_SHOWTABLES, "show tables");
         assertDDLType(
                 HiveASTParser.TOK_DESCTABLE,
@@ -112,7 +112,7 @@ public class HiveASTParserTest {
     }
 
     @Test
-    public void testView() throws Exception {
+    void testView() throws Exception {
         assertDDLType(
                 HiveASTParser.TOK_CREATEVIEW,
                 "create view db1.v1 as select x,y from tbl",
@@ -127,7 +127,7 @@ public class HiveASTParserTest {
     }
 
     @Test
-    public void testFunction() throws Exception {
+    void testFunction() throws Exception {
         assertDDLType(
                 HiveASTParser.TOK_CREATEFUNCTION,
                 "create function func as 'class.name'",
@@ -140,14 +140,14 @@ public class HiveASTParserTest {
     }
 
     @Test
-    public void testMacro() throws Exception {
+    void testMacro() throws Exception {
         assertDDLType(
                 HiveASTParser.TOK_CREATEMACRO, "create temporary macro m1 (x int, y int) x + y ");
         assertDDLType(HiveASTParser.TOK_DROPMACRO, "drop temporary macro m1");
     }
 
     @Test
-    public void testConstraints() throws Exception {
+    void testConstraints() throws Exception {
         assertDDLType(
                 HiveASTParser.TOK_CREATETABLE,
                 "create table foo (x int not null norely,y string not null disable validate)",

@@ -22,7 +22,6 @@ import org.apache.flink.util.Preconditions;
 
 import com.google.common.io.Resources;
 import com.klarna.hiverunner.HiveServerContainer;
-import com.klarna.hiverunner.HiveServerContext;
 import com.klarna.hiverunner.HiveShell;
 import com.klarna.hiverunner.HiveShellContainer;
 import com.klarna.hiverunner.annotations.HiveProperties;
@@ -33,18 +32,10 @@ import com.klarna.hiverunner.annotations.HiveSetupScript;
 import com.klarna.hiverunner.builder.HiveShellBuilder;
 import com.klarna.hiverunner.config.HiveRunnerConfig;
 import com.klarna.reflection.ReflectionUtils;
-import org.junit.Ignore;
-import org.junit.internal.AssumptionViolatedException;
-import org.junit.internal.runners.model.EachTestNotifier;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.rules.TemporaryFolder;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,82 +55,45 @@ import java.util.Set;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 /**
- * JUnit 4 runner that runs hive sql on a HiveServer residing in this JVM. No external dependencies
- * needed. Inspired by StandaloneHiveRunner.java (almost copied).
+ * JUnit 5 extension that runs hive sql on a HiveServer residing in this JVM. No external
+ * dependencies needed.
  */
-public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
+class FlinkEmbeddedHiveRunnerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FlinkEmbeddedHiveRunner.class);
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(FlinkEmbeddedHiveRunnerExtension.class);
+
     private HiveShellContainer container;
+    private TemporaryFolder temporaryFolder;
     private final HiveRunnerConfig config = new HiveRunnerConfig();
-    protected HiveServerContext context;
-
-    public FlinkEmbeddedHiveRunner(Class<?> clazz) throws InitializationError {
-        super(clazz);
-    }
 
     @Override
-    protected List<TestRule> classRules() {
+    public void beforeAll(ExtensionContext context) throws Exception {
+        Class<?> testClass = context.getRequiredTestClass();
+
         // need to load hive runner config before the context is inited
-        loadAnnotatesHiveRunnerConfig(getTestClass().getJavaClass());
-        final TemporaryFolder temporaryFolder = new TemporaryFolder();
-        context = new FlinkEmbeddedHiveServerContext(temporaryFolder, config);
-        List<TestRule> rules = super.classRules();
-        ExternalResource hiveShell =
-                new ExternalResource() {
-                    @Override
-                    protected void before() throws Throwable {
-                        container =
-                                createHiveServerContainer(getTestClass().getJavaClass(), context);
-                    }
+        loadAnnotatedHiveRunnerConfig(testClass);
 
-                    @Override
-                    protected void after() {
-                        tearDown();
-                    }
-                };
-        rules.add(hiveShell);
-        rules.add(temporaryFolder);
-        return rules;
+        temporaryFolder = new TemporaryFolder();
+        temporaryFolder.create();
+
+        FlinkEmbeddedHiveServerContext hiveContext =
+                new FlinkEmbeddedHiveServerContext(temporaryFolder, config);
+        container = createHiveServerContainer(testClass, hiveContext);
     }
 
     @Override
-    protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
-        Description description = describeChild(method);
-        if (method.getAnnotation(Ignore.class) != null) {
-            notifier.fireTestIgnored(description);
-        } else {
-            EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
-            eachNotifier.fireTestStarted();
-            try {
-                runTestMethod(method, eachNotifier);
-            } finally {
-                eachNotifier.fireTestFinished();
-            }
-        }
-    }
-
-    /** Runs a {@link Statement} that represents a leaf (aka atomic) test. */
-    private void runTestMethod(FrameworkMethod method, EachTestNotifier notifier) {
-        Statement statement = methodBlock(method);
-
-        try {
-            statement.evaluate();
-        } catch (AssumptionViolatedException e) {
-            notifier.addFailedAssumption(e);
-        } catch (Throwable e) {
-            notifier.addFailure(e);
-        }
-    }
-
-    private void tearDown() {
+    public void afterAll(ExtensionContext context) {
         if (container != null) {
-            LOGGER.info("Tearing down {}", getName());
+            LOGGER.info("Tearing down {}", context.getDisplayName());
             try {
                 container.tearDown();
             } catch (Throwable e) {
                 LOGGER.warn("Tear down failed: " + e.getMessage(), e);
             }
+        }
+        if (temporaryFolder != null) {
+            temporaryFolder.delete();
         }
     }
 
@@ -148,7 +102,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
      * the HiveServer.
      */
     private HiveShellContainer createHiveServerContainer(
-            final Class testClass, HiveServerContext context) throws Exception {
+            Class<?> testClass, FlinkEmbeddedHiveServerContext context) throws Exception {
 
         context.init();
 
@@ -163,9 +117,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         hiveShellBuilder.setHiveServerContainer(hiveServerContainer);
 
         loadAnnotatedResources(testClass, hiveShellBuilder);
-
         loadAnnotatedProperties(testClass, hiveShellBuilder);
-
         loadAnnotatedSetupScripts(testClass, hiveShellBuilder);
 
         // Build shell
@@ -181,16 +133,15 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         return shell;
     }
 
-    private void loadAnnotatesHiveRunnerConfig(Class testClass) {
+    private void loadAnnotatedHiveRunnerConfig(Class<?> testClass) {
         Set<Field> fields =
                 ReflectionUtils.getAllFields(testClass, withAnnotation(HiveRunnerSetup.class));
         Preconditions.checkState(
                 fields.size() <= 1,
                 "Exact one field of type HiveRunnerConfig should to be annotated with @HiveRunnerSetup");
 
-        // Override the config with test case config. Taking care to not replace the config instance
-        // since it
-        // has been passes around and referenced by some of the other test rules.
+        // Override the config with test case config. Taking care to not replace the config
+        // instance since it has been passed around and referenced by some of the other test rules.
         if (!fields.isEmpty()) {
             Field field = fields.iterator().next();
             Preconditions.checkState(
@@ -203,7 +154,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
     }
 
     private HiveShellField loadScriptsUnderTest(
-            final Class testClass, HiveShellBuilder hiveShellBuilder) {
+            Class<?> testClass, HiveShellBuilder hiveShellBuilder) {
         try {
             Set<Field> fields =
                     ReflectionUtils.getAllFields(testClass, withAnnotation(HiveSQL.class));
@@ -246,7 +197,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         }
     }
 
-    private void loadAnnotatedSetupScripts(Class testClass, HiveShellBuilder hiveShellBuilder) {
+    private void loadAnnotatedSetupScripts(Class<?> testClass, HiveShellBuilder hiveShellBuilder) {
         Set<Field> setupScriptFields =
                 ReflectionUtils.getAllFields(testClass, withAnnotation(HiveSetupScript.class));
         for (Field setupScriptField : setupScriptFields) {
@@ -274,13 +225,12 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         }
     }
 
-    private void loadAnnotatedResources(Class testClass, HiveShellBuilder workFlowBuilder)
+    private void loadAnnotatedResources(Class<?> testClass, HiveShellBuilder workFlowBuilder)
             throws IOException {
         Set<Field> fields =
                 ReflectionUtils.getAllFields(testClass, withAnnotation(HiveResource.class));
 
         for (Field resourceField : fields) {
-
             HiveResource annotation = resourceField.getAnnotation(HiveResource.class);
             String targetFile = annotation.targetFile();
 
@@ -300,7 +250,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         }
     }
 
-    private Path getMandatoryPathFromField(Class testClass, Field resourceField) {
+    private Path getMandatoryPathFromField(Class<?> testClass, Field resourceField) {
         Path path;
         if (ReflectionUtils.isOfType(resourceField, File.class)) {
             File dataFile =
@@ -320,7 +270,7 @@ public class FlinkEmbeddedHiveRunner extends BlockJUnit4ClassRunner {
         return path;
     }
 
-    private void loadAnnotatedProperties(Class testClass, HiveShellBuilder workFlowBuilder) {
+    private void loadAnnotatedProperties(Class<?> testClass, HiveShellBuilder workFlowBuilder) {
         for (Field hivePropertyField :
                 ReflectionUtils.getAllFields(testClass, withAnnotation(HiveProperties.class))) {
             Preconditions.checkState(

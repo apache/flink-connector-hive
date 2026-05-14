@@ -38,11 +38,12 @@ import com.klarna.hiverunner.annotations.HiveSQL;
 import com.klarna.hiverunner.config.HiveRunnerConfig;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -70,8 +71,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * here only if a test requires hive-side functionalities, e.g. preparing or validating data in
  * hive.
  */
-@RunWith(FlinkEmbeddedHiveRunner.class)
-public class HiveRunnerITCase {
+@ExtendWith(FlinkEmbeddedHiveRunnerExtension.class)
+@Isolated
+class HiveRunnerITCase {
 
     @HiveSQL(files = {})
     private static HiveShell hiveShell;
@@ -92,22 +94,22 @@ public class HiveRunnerITCase {
 
     private static HiveCatalog hiveCatalog;
 
-    @BeforeClass
-    public static void createCatalog() {
+    @BeforeAll
+    static void createCatalog() {
         HiveConf hiveConf = hiveShell.getHiveConf();
         hiveCatalog = HiveTestUtils.createHiveCatalog(hiveConf);
         hiveCatalog.open();
     }
 
-    @AfterClass
-    public static void closeCatalog() {
+    @AfterAll
+    static void closeCatalog() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
     }
 
     @Test
-    public void testInsertIntoNonPartitionTable() throws Exception {
+    void testInsertIntoNonPartitionTable() throws Exception {
         List<Row> toWrite = generateRecords(5);
         TestCollectionTableFactory.reset();
         TestCollectionTableFactory.initData(toWrite);
@@ -130,7 +132,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testWriteComplexType() throws Exception {
+    void testWriteComplexType() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvWithHiveCatalog(hiveCatalog);
 
         Row row = new Row(3);
@@ -169,7 +171,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testWriteNestedComplexType() throws Exception {
+    void testWriteNestedComplexType() throws Exception {
 
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvWithHiveCatalog(hiveCatalog);
 
@@ -207,7 +209,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testWriteNullValues() throws Exception {
+    void testWriteNullValues() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
         tableEnv.useCatalog(hiveCatalog.getName());
@@ -240,7 +242,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testDifferentFormats() throws Exception {
+    void testDifferentFormats() throws Exception {
         String[] formats = new String[] {"orc", "parquet", "sequencefile", "csv", "avro"};
         for (String format : formats) {
             if (format.equals("avro") && !HiveVersionTestUtil.HIVE_230_OR_LATER) {
@@ -252,7 +254,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testDecimal() throws Exception {
+    void testDecimal() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -284,7 +286,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testInsertOverwrite() throws Exception {
+    void testInsertOverwrite() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -335,7 +337,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testStaticPartition() throws Exception {
+    void testStaticPartition() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -359,7 +361,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testDynamicPartition() throws Exception {
+    void testDynamicPartition() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -383,7 +385,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testPartialDynamicPartition() throws Exception {
+    void testPartialDynamicPartition() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -407,17 +409,17 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testBatchCompressTextTable() throws Exception {
+    void testBatchCompressTextTable() throws Exception {
         testCompressTextTable(true);
     }
 
     @Test
-    public void testStreamCompressTextTable() throws Exception {
+    void testStreamCompressTextTable() throws Exception {
         testCompressTextTable(false);
     }
 
     @Test
-    public void testTimestamp() throws Exception {
+    void testTimestamp() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -450,7 +452,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testDate() throws Exception {
+    void testDate() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -477,7 +479,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testViews() throws Exception {
+    void testViews() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         TableEnvExecutorUtil.executeInSeparateDatabase(
                 tableEnv,
@@ -524,7 +526,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testWhitespacePartValue() throws Exception {
+    void testWhitespacePartValue() throws Exception {
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.executeSql("create database db1");
         try {
@@ -542,20 +544,20 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testBatchTransactionalTable() throws Exception {
+    void testBatchTransactionalTable() throws Exception {
         testTransactionalTable(true);
     }
 
     @Test
-    public void testStreamTransactionalTable() throws Exception {
+    void testStreamTransactionalTable() throws Exception {
         testTransactionalTable(false);
     }
 
     @Test
-    public void testOrcSchemaEvol() throws Exception {
+    void testOrcSchemaEvol() throws Exception {
         // not supported until 2.1.0 -- https://issues.apache.org/jira/browse/HIVE-11981,
         // https://issues.apache.org/jira/browse/HIVE-13178
-        Assume.assumeTrue(HiveVersionTestUtil.HIVE_230_OR_LATER);
+        Assumptions.assumeTrue(HiveVersionTestUtil.HIVE_230_OR_LATER);
         TableEnvironment tableEnv = getTableEnvWithHiveCatalog();
 
         TableEnvExecutorUtil.executeInSeparateDatabase(
@@ -589,7 +591,7 @@ public class HiveRunnerITCase {
     }
 
     @Test
-    public void testCatalogLock() throws Exception {
+    void testCatalogLock() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.DEFAULT);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
         tableEnv.useCatalog(hiveCatalog.getName());
