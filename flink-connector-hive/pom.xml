@@ -35,7 +35,7 @@ under the License.
 	<packaging>jar</packaging>
 
 	<properties>
-		<derby.version>10.10.2.0</derby.version>
+		<derby.version>10.17.1.0</derby.version>
 		<!--
 		Hive requires Hadoop 2 to avoid
 		java.lang.NoClassDefFoundError: org/apache/hadoop/metrics/Updater errors
