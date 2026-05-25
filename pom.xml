@@ -62,7 +62,7 @@ under the License.
         <junit-jupiter.version>5.10.1</junit-jupiter.version>
         <log4j.version>2.22.0</log4j.version>
         <mockito.version>4.11.0</mockito.version>
-        <netty.version>4.1.17.Final</netty.version>
+        <netty.version>4.1.115.Final</netty.version>
         <scala.binary.version>2.12</scala.binary.version>
         <slf4j.version>1.7.36</slf4j.version>
         <testcontainers.version>1.20.4</testcontainers.version>
