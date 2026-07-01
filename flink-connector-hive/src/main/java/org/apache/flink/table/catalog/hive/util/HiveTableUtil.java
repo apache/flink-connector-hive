@@ -64,6 +64,8 @@ import org.apache.hadoop.hive.ql.io.StorageFormatFactory;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -97,6 +99,8 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 /** Utils to for Hive-backed table. */
 public class HiveTableUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HiveTableUtil.class);
 
     private static final byte HIVE_CONSTRAINT_ENABLE = 1 << 2;
     private static final byte HIVE_CONSTRAINT_VALIDATE = 1 << 1;
@@ -506,29 +510,6 @@ public class HiveTableUtil {
         // because hive cannot understand the expanded query anyway
         if (isHiveTable && !isView) {
             HiveTableUtil.initiateTableFromProperties(hiveTable, properties, hiveConf);
-            List<FieldSchema> allColumns =
-                    HiveTableUtil.createHiveColumns(table.getResolvedSchema());
-            // Table columns and partition keys
-            if (table instanceof CatalogTable) {
-                CatalogTable catalogTable = (CatalogTable) table;
-
-                if (catalogTable.isPartitioned()) {
-                    int partitionKeySize = catalogTable.getPartitionKeys().size();
-                    List<FieldSchema> regularColumns =
-                            allColumns.subList(0, allColumns.size() - partitionKeySize);
-                    List<FieldSchema> partitionColumns =
-                            allColumns.subList(
-                                    allColumns.size() - partitionKeySize, allColumns.size());
-
-                    sd.setCols(regularColumns);
-                    hiveTable.setPartitionKeys(partitionColumns);
-                } else {
-                    sd.setCols(allColumns);
-                    hiveTable.setPartitionKeys(new ArrayList<>());
-                }
-            } else {
-                sd.setCols(allColumns);
-            }
             // Table properties
             hiveTable.getParameters().putAll(properties);
         } else {
@@ -551,6 +532,47 @@ public class HiveTableUtil {
                 properties.put(IS_GENERIC, "true");
             }
             hiveTable.setParameters(properties);
+        }
+
+        List<FieldSchema> allColumns = null;
+        try {
+            allColumns =
+                    HiveTableUtil.createHiveColumns(table.getResolvedSchema());
+        } catch (Exception e) {
+            if (isHiveTable && !isView) {
+                // it's not ok if the Hive schema was not created from Flink schema for hive table.
+                // The exception should be thrown.
+                throw e;
+            } else {
+                // it's ok if we get the exception during converting Flink schema to Hive schema
+                // for non-hive tables because not all Flink types might be directly converted to
+                // Hive types.
+                LOG.warn("Can't convert Flink schema to Hive schema. The error message: '{}'", e.getMessage());
+            }
+        }
+
+        if (allColumns != null) {
+            // Table columns and partition keys
+            if (table instanceof CatalogTable) {
+                CatalogTable catalogTable = (CatalogTable) table;
+
+                if (catalogTable.isPartitioned()) {
+                    int partitionKeySize = catalogTable.getPartitionKeys().size();
+                    List<FieldSchema> regularColumns =
+                            allColumns.subList(0, allColumns.size() - partitionKeySize);
+                    List<FieldSchema> partitionColumns =
+                            allColumns.subList(
+                                    allColumns.size() - partitionKeySize, allColumns.size());
+
+                    sd.setCols(regularColumns);
+                    hiveTable.setPartitionKeys(partitionColumns);
+                } else {
+                    sd.setCols(allColumns);
+                    hiveTable.setPartitionKeys(new ArrayList<>());
+                }
+            } else {
+                sd.setCols(allColumns);
+            }
         }
 
         if (isView) {

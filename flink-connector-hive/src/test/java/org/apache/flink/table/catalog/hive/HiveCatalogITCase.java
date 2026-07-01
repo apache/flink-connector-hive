@@ -27,6 +27,7 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -269,6 +270,34 @@ public class HiveCatalogITCase {
                 "2019-12-12 00:00:05.0,2019-12-12 00:00:04.004001,3,50.00\n"
                         + "2019-12-12 00:00:10.0,2019-12-12 00:00:06.006001,2,5.33\n";
         assertThat(FileUtils.readFileUtf8(new File(new URI(sinkPath)))).isEqualTo(expected);
+    }
+
+    @Test
+    public void testShowPartitionsOnNonHiveTable() throws Exception {
+        TableEnvironment tableEnvStream =
+                TableEnvironment.create(EnvironmentSettings.inStreamingMode());
+        tableEnvStream.getConfig().set(TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, 1);
+
+        tableEnvStream.registerCatalog("myhive", hiveCatalog);
+        tableEnvStream.useCatalog("myhive");
+
+        String sinkPath = new File(tempFolder.newFolder(), "sink").toURI().toString();
+
+        tableEnvStream.executeSql(
+                "create table test_table(\n"
+                        + "uuid varchar(20),\n"
+                        + "name varchar(10),\n"
+                        + "dt varchar(20)\n"
+                        + ")\n"
+                        + "PARTITIONED BY (dt) "
+                        + String.format(
+                        "WITH ('connector' = 'filesystem','path' = '%s','format' = 'csv')",
+                        sinkPath));
+
+        TableResult tableResult = tableEnvStream.executeSql("SHOW PARTITIONS test_table");
+        List<Row> result = CollectionUtil.iteratorToList(tableResult.collect());
+
+        assertThat(result).isEmpty();
     }
 
     @Test
