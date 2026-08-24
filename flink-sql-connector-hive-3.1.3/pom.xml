@@ -311,6 +311,14 @@ under the License.
 									<pattern>com.google</pattern>
 									<shadedPattern>org.apache.flink.hive.shaded.com.google</shadedPattern>
 								</relocation>
+								<relocation>
+									<pattern>org.apache.commons.lang</pattern>
+									<shadedPattern>org.apache.flink.hive.shaded.org.apache.commons.lang</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>org.apache.commons.lang3</pattern>
+									<shadedPattern>org.apache.flink.hive.shaded.org.apache.commons.lang3</shadedPattern>
+								</relocation>
 							</relocations>
 						</configuration>
 					</execution>
