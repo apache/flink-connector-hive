@@ -36,3 +36,73 @@ jobs:
       flink_version: ${{ matrix.flink }}
       jdk_version: ${{ matrix.jdk }}
       optional_maven_profiles: ${{ matrix.mvn_profile }}
+
+  # Hive 4 requires a two-phase build to avoid a cyclic Maven dependency:
+  # flink-connector-hive (hive4 profile) -> flink-connector-hive-4.0.0 -> flink-connector-hive
+  # Phase 1: install the shim module (without -Phive4, so no cycle)
+  # Phase 2: run tests with -Phive4 (shim resolved from local repo)
+  compile_and_test_hive4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      MVN_COMMON_OPTIONS: -U -B --no-transfer-progress -Dflink.version=2.0-preview1
+      MVN_CONNECTION_OPTIONS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+      FLINK_CACHE_DIR: "/tmp/cache/flink"
+      MVN_BUILD_OUTPUT_FILE: "/tmp/mvn_build_output.out"
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Set JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 11
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Setup Maven
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.8.6
+
+      - name: Download Flink binary
+        run: |
+          mkdir -p ${{ env.FLINK_CACHE_DIR }}
+          wget -q -c https://dlcdn.apache.org/flink/flink-2.0-preview1/flink-2.0-preview1-bin-scala_2.12.tgz -O - | tar -xz -C ${{ env.FLINK_CACHE_DIR }}
+
+      - name: "Phase 1: Install shim module (no -Phive4, avoids cycle)"
+        run: |
+          mvn install -pl flink-connector-hive -am -DskipTests \
+            ${MVN_COMMON_OPTIONS} ${MVN_CONNECTION_OPTIONS} \
+            -Dscala-2.12
+          mvn install -pl flink-connector-hive-4.0.0 -am -DskipTests \
+            ${MVN_COMMON_OPTIONS} ${MVN_CONNECTION_OPTIONS} \
+            -Dscala-2.12
+
+      - name: "Phase 2: Test with Hive 4"
+        timeout-minutes: 80
+        run: |
+          set -o pipefail
+
+          mvn test -f flink-connector-hive/pom.xml \
+            ${MVN_COMMON_OPTIONS} \
+            -Dmaven.main.skip=true \
+            -DforkCount=1 \
+            -Dscala-2.12 \
+            -Phive4 -P java11-target \
+            ${MVN_CONNECTION_OPTIONS} \
+            -Dlog4j.configurationFile=file://$(pwd)/tools/ci/log4j.properties \
+            | tee ${{ env.MVN_BUILD_OUTPUT_FILE }}
+
+      - name: Print JVM thread dumps when cancelled
+        if: ${{ failure() }}
+        run: |
+          if [[ "$OSTYPE" == "linux-gnu"* ]] && command -v sudo &> /dev/null; then
+            curl -s -L -o /tmp/jattach https://github.com/apangin/jattach/releases/download/v2.1/jattach
+            chmod +x /tmp/jattach
+            for java_pid in $(sudo pgrep java); do
+              echo "----------------------- pid $java_pid -----------------------"
+              sudo /tmp/jattach $java_pid jcmd "Thread.print -l"
+            done
+          fi
+          exit 0

@@ -38,7 +38,6 @@ import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.FileUtils;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
@@ -73,6 +72,7 @@ import java.util.stream.Collectors;
 import static org.apache.flink.table.planner.utils.TableTestUtil.readFromResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeFalse;
 
 /** Test hive query compatibility. */
 public class HiveDialectQueryITCase {
@@ -91,11 +91,11 @@ public class HiveDialectQueryITCase {
     public static void setup() throws Exception {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         // required by query like "src.`[k].*` from src"
-        hiveCatalog.getHiveConf().setVar(HiveConf.ConfVars.HIVE_QUOTEDID_SUPPORT, "none");
+        hiveCatalog.getHiveConf().setVar(HiveConfVars.HIVE_QUOTEDID_SUPPORT, "none");
         hiveCatalog.open();
         tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.getConfig().set(BatchExecutionOptions.ADAPTIVE_AUTO_PARALLELISM_ENABLED, false);
-        warehouse = hiveCatalog.getHiveConf().getVar(HiveConf.ConfVars.METASTOREWAREHOUSE);
+        warehouse = hiveCatalog.getHiveConf().getVar(HiveConfVars.METASTORE_WAREHOUSE);
 
         // create tables
         tableEnv.executeSql("create table foo (x int, y int)");
@@ -472,7 +472,7 @@ public class HiveDialectQueryITCase {
 
     @Test
     public void testInsertDirectory() throws Exception {
-        String warehouse = hiveCatalog.getHiveConf().getVar(HiveConf.ConfVars.METASTOREWAREHOUSE);
+        String warehouse = hiveCatalog.getHiveConf().getVar(HiveConfVars.METASTORE_WAREHOUSE);
 
         // test insert overwrite directory with row format parameters
         tableEnv.executeSql("create table map_table (foo STRING , bar MAP<STRING, INT>)");
@@ -495,7 +495,11 @@ public class HiveDialectQueryITCase {
                         .toArray(new Path[0]);
         assertThat(files.length).isEqualTo(1);
         String actualString = FileUtils.readFileUtf8(files[0].toFile());
-        assertThat(actualString.trim()).isEqualTo("A:english=90#math=100#history=85");
+        assertThat(actualString.trim())
+                .isEqualTo(
+                        HiveVersionTestUtil.HIVE_400_OR_LATER
+                                ? "A:english=90\u0002math=100\u0002history=85"
+                                : "A:english=90#math=100#history=85");
 
         // test insert overwrite directory store as other format
         tableEnv.executeSql("create table d_table(x int) PARTITIONED BY (ds STRING, hr STRING)");
@@ -593,7 +597,7 @@ public class HiveDialectQueryITCase {
                     CollectionUtil.iteratorToList(
                             tableEnv.executeSql("select * from destp1").collect());
             String defaultPartitionName =
-                    hiveCatalog.getHiveConf().getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME);
+                    hiveCatalog.getHiveConf().getVar(HiveConfVars.DEFAULT_PARTITION_NAME);
             assertThat(result.toString())
                     .isEqualTo(
                             String.format(
@@ -709,6 +713,8 @@ public class HiveDialectQueryITCase {
 
     @Test
     public void testLoadData() throws Exception {
+        // OrcShim in flink-orc doesn't support Hive 4 yet
+        assumeFalse(HiveVersionTestUtil.HIVE_400_OR_LATER);
         tableEnv.executeSql("create table tab1 (col1 int, col2 int) stored as orc");
         tableEnv.executeSql("create table tab2 (col1 int, col2 int) STORED AS ORC");
         tableEnv.executeSql(
@@ -947,6 +953,8 @@ public class HiveDialectQueryITCase {
 
     @Test
     public void testNullLiteralAsArgument() throws Exception {
+        // Hive 4 removed numeric-to-timestamp casting (GenericUDFTimestamp rejects numeric input)
+        assumeFalse(HiveVersionTestUtil.HIVE_400_OR_LATER);
         tableEnv.executeSql("create table test_ts(ts timestamp)");
         tableEnv.executeSql("create table t_bigint(ts bigint)");
         tableEnv.executeSql("create table t_array(a_t array<bigint>)");

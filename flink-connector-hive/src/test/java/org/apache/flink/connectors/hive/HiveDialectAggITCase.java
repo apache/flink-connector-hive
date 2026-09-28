@@ -29,7 +29,6 @@ import org.apache.flink.table.module.hive.HiveModule;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CollectionUtil;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -54,7 +53,7 @@ public class HiveDialectAggITCase {
     public static void setup() throws Exception {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         // required by query like "src.`[k].*` from src"
-        hiveCatalog.getHiveConf().setVar(HiveConf.ConfVars.HIVE_QUOTEDID_SUPPORT, "none");
+        hiveCatalog.getHiveConf().setVar(HiveConfVars.HIVE_QUOTEDID_SUPPORT, "none");
         hiveCatalog.open();
         tableEnv = getTableEnvWithHiveCatalog();
         tableEnv.getConfig().set(BatchExecutionOptions.ADAPTIVE_AUTO_PARALLELISM_ENABLED, false);

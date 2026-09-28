@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.planner.delegation.hive;
 
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.connectors.hive.JobConfWrapper;
 import org.apache.flink.table.planner.delegation.hive.copy.HiveParserASTNode;
 import org.apache.flink.table.planner.delegation.hive.copy.HiveParserBaseSemanticAnalyzer;
@@ -200,7 +201,7 @@ public class HiveParserScriptTransformHelper {
 
         String serdeName = LazySimpleSerDe.class.getName();
         int fieldSeparator = Utilities.tabCode;
-        if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESCRIPTESCAPE)) {
+        if (HiveConf.getBoolVar(hiveConf, HiveConfVars.HIVE_SCRIPT_ESCAPE)) {
             fieldSeparator = Utilities.ctrlaCode;
         }
 

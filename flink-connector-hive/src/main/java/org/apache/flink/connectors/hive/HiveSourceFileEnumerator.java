@@ -28,7 +28,6 @@ import org.apache.flink.util.Preconditions;
 
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
@@ -107,7 +106,7 @@ public class HiveSourceFileEnumerator implements FileEnumerator {
     }
 
     private static boolean supportSetSplitMaxSize(List<HiveTablePartition> partitions) {
-        // now, the configuration 'HiveConf.ConfVars.MAPREDMAXSPLITSIZE' we set only
+        // now, the configuration 'HiveConfVars.MAPRED_MAX_SPLIT_SIZE' we set only
         // works for orc format
         for (HiveTablePartition partition : partitions) {
             String serializationLib =
@@ -137,7 +136,7 @@ public class HiveSourceFileEnumerator implements FileEnumerator {
         long maxSplitBytes =
                 calculateMaxSplitBytes(
                         totalByteWithOpenCost, minNumSplits, defaultMaxSplitBytes, openCost);
-        jobConf.set(HiveConf.ConfVars.MAPREDMAXSPLITSIZE.varname, String.valueOf(maxSplitBytes));
+        jobConf.set(HiveConfVars.MAPRED_MAX_SPLIT_SIZE.varname, String.valueOf(maxSplitBytes));
     }
 
     private static long calculateMaxSplitBytes(

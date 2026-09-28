@@ -45,6 +45,10 @@ public class HiveShimLoader {
     public static final String HIVE_VERSION_V3_1_1 = "3.1.1";
     public static final String HIVE_VERSION_V3_1_2 = "3.1.2";
     public static final String HIVE_VERSION_V3_1_3 = "3.1.3";
+    public static final String HIVE_VERSION_V4_0_0 = "4.0.0";
+    public static final String HIVE_VERSION_V4_0_1 = "4.0.1";
+    public static final String HIVE_VERSION_V4_1_0 = "4.1.0";
+    public static final String HIVE_VERSION_V4_2_0 = "4.2.0";
 
     private static final Map<String, HiveShim> hiveShims = new ConcurrentHashMap<>(2);
 
@@ -101,11 +105,40 @@ public class HiveShimLoader {
                     if (v.startsWith(HIVE_VERSION_V3_1_3)) {
                         return new HiveShimV313();
                     }
+                    if (v.startsWith(HIVE_VERSION_V4_0_0)) {
+                        return loadHiveShimByReflection(
+                                "org.apache.flink.table.catalog.hive.client.HiveShimV400");
+                    }
+                    if (v.startsWith(HIVE_VERSION_V4_0_1)) {
+                        return loadHiveShimByReflection(
+                                "org.apache.flink.table.catalog.hive.client.HiveShimV400");
+                    }
+                    if (v.startsWith(HIVE_VERSION_V4_1_0)) {
+                        return loadHiveShimByReflection(
+                                "org.apache.flink.table.catalog.hive.client.HiveShimV400");
+                    }
+                    if (v.startsWith(HIVE_VERSION_V4_2_0)) {
+                        return loadHiveShimByReflection(
+                                "org.apache.flink.table.catalog.hive.client.HiveShimV400");
+                    }
                     throw new CatalogException("Unsupported Hive version " + v);
                 });
     }
 
     public static String getHiveVersion() {
         return HiveVersionInfo.getVersion();
+    }
+
+    private static HiveShim loadHiveShimByReflection(String className) {
+        try {
+            Class<?> clazz = Class.forName(className);
+            return (HiveShim) clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new CatalogException(
+                    "Failed to load HiveShim class "
+                            + className
+                            + ". Make sure flink-connector-hive-4.0.0 is on the classpath.",
+                    e);
+        }
     }
 }

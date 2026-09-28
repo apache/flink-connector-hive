@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.planner.delegation.hive;
 
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.connectors.hive.HiveInternalOptions;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableException;
@@ -221,9 +222,9 @@ public class HiveParser implements Parser {
             return Collections.singletonList(nonSqlOperation.get());
         }
         HiveConf hiveConfCopy = new HiveConf(hiveConf);
-        hiveConfCopy.setVar(HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
+        hiveConfCopy.setVar(HiveConfVars.DYNAMIC_PARTITIONING_MODE, "nonstrict");
         hiveConfCopy.set("hive.allow.udf.load.on.demand", "false");
-        hiveConfCopy.setVar(HiveConf.ConfVars.HIVE_EXECUTION_ENGINE, "mr");
+        hiveConfCopy.setVar(HiveConfVars.HIVE_EXECUTION_ENGINE, "mr");
         // Note: it's equal to HiveCatalog#getHiveVersion, but we can't use
         // HiveCatalog#getHiveVersion directly for classloader issue.
         // For more detail, please see class HiveCatalogUtils.

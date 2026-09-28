@@ -26,7 +26,6 @@ import org.apache.flink.table.module.CoreModule;
 import org.apache.flink.table.module.hive.HiveModule;
 import org.apache.flink.util.CollectionUtil;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +44,7 @@ public class HiveDialectQueryPlanTest {
     public static void setup() throws Exception {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         // required by query like "src.`[k].*` from src"
-        hiveCatalog.getHiveConf().setVar(HiveConf.ConfVars.HIVE_QUOTEDID_SUPPORT, "none");
+        hiveCatalog.getHiveConf().setVar(HiveConfVars.HIVE_QUOTEDID_SUPPORT, "none");
         hiveCatalog.open();
         tableEnv = getTableEnvWithHiveCatalog();
 

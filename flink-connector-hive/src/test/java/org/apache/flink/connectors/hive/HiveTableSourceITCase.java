@@ -367,7 +367,11 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
 
             query = tableEnv.sqlQuery("select x from db1.part where '' = p2");
             explain = query.explain().split("==.*==\n");
-            assertThat(catalog.fallback).isFalse();
+            // Hive 4 metastore doesn't support '' = p2 as a server-side partition filter,
+            // so it falls back to client-side filtering.
+            if (hiveCatalog.getHiveVersion().compareTo("4.0.0") < 0) {
+                assertThat(catalog.fallback).isFalse();
+            }
             optimizedPlan = explain[2];
             if (curFlinkVersion
                     == FlinkVersion
@@ -635,6 +639,8 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     public void testSourceConfig() throws Exception {
         // vector reader not available for 1.x and we're not testing orc for 2.0.x
         Assume.assumeTrue(HiveVersionTestUtil.HIVE_230_OR_LATER);
+        // ORC shim doesn't support Hive 4 yet (flink-orc upstream issue)
+        Assume.assumeTrue(hiveCatalog.getHiveVersion().compareTo("4.0.0") < 0);
         Map<String, String> env = System.getenv();
         batchTableEnv.executeSql("create database db1");
         try {

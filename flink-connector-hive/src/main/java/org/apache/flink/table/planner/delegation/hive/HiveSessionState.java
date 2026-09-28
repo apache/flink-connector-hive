@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.delegation.hive;
 
 import org.apache.flink.connectors.hive.FlinkHiveException;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.catalog.CatalogRegistry;
 import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
 import org.apache.flink.util.FileUtils;
@@ -93,7 +94,7 @@ public class HiveSessionState extends SessionState {
         }
         // close the classloader created in hive
         JavaUtils.closeClassLoadersTo(hiveLoader, originContextLoader);
-        File resourceDir = new File(getConf().getVar(HiveConf.ConfVars.DOWNLOADED_RESOURCES_DIR));
+        File resourceDir = new File(getConf().getVar(HiveConfVars.DOWNLOADED_RESOURCES_DIR));
         LOG.debug("Removing resource dir " + resourceDir);
         FileUtils.deleteDirectoryQuietly(resourceDir);
         Hive.closeCurrent();

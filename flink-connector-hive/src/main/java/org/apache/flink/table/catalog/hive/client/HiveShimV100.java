@@ -38,10 +38,12 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
@@ -50,10 +52,15 @@ import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.FunctionUtils;
 import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
+import org.apache.hadoop.hive.ql.lib.Dispatcher;
+import org.apache.hadoop.hive.ql.lib.Node;
+import org.apache.hadoop.hive.ql.lib.PreOrderWalker;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.SimpleGenericUDAFParameterInfo;
 import org.apache.hadoop.hive.serde2.Deserializer;
+import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
@@ -63,6 +70,8 @@ import org.apache.hadoop.hive.serde2.io.HiveVarcharWritable;
 import org.apache.hadoop.hive.serde2.io.ShortWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.FloatWritable;
@@ -574,5 +583,58 @@ public class HiveShimV100 implements HiveShim {
                 Date.class.getName(),
                 LocalDate.class.getName(),
                 flinkDate.getClass().getName());
+    }
+
+    @Override
+    public List<String> getStructFieldNames(StructTypeInfo structTypeInfo) {
+        return new ArrayList<>(structTypeInfo.getAllStructFieldNames());
+    }
+
+    @Override
+    public List<TypeInfo> getStructFieldTypeInfos(StructTypeInfo structTypeInfo) {
+        return new ArrayList<>(structTypeInfo.getAllStructFieldTypeInfos());
+    }
+
+    @Override
+    public void initializeSerDe(
+            Deserializer deserializer,
+            Configuration conf,
+            Properties tableProperties,
+            Properties partitionProperties)
+            throws SerDeException {
+        SerDeUtils.initializeSerDe(deserializer, conf, tableProperties, partitionProperties);
+    }
+
+    @Override
+    public Object createPrincipalDesc(String principalName, PrincipalType principalType) {
+        return new org.apache.hadoop.hive.ql.plan.PrincipalDesc(principalName, principalType);
+    }
+
+    @Override
+    public List<ColumnStatisticsObj> getTableColumnStatistics(
+            IMetaStoreClient client,
+            String databaseName,
+            String tableName,
+            List<String> columnNames)
+            throws TException {
+        return client.getTableColumnStatistics(databaseName, tableName, columnNames);
+    }
+
+    @Override
+    public Map<String, List<ColumnStatisticsObj>> getPartitionColumnStatistics(
+            IMetaStoreClient client,
+            String dbName,
+            String tableName,
+            List<String> partNames,
+            List<String> colNames)
+            throws TException {
+        return client.getPartitionColumnStatistics(dbName, tableName, partNames, colNames);
+    }
+
+    @Override
+    public void walkExpressionTree(Node expression, Dispatcher dispatcher)
+            throws SemanticException {
+        PreOrderWalker walker = new PreOrderWalker(dispatcher);
+        walker.startWalking(Collections.singleton(expression), null);
     }
 }

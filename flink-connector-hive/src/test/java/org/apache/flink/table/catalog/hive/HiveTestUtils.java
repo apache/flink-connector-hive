@@ -24,6 +24,7 @@ import org.apache.flink.configuration.BatchExecutionOptions;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.MemorySize;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.connectors.hive.HiveOptions;
 import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -131,9 +132,9 @@ public class HiveTestUtils {
             HiveConf.setHiveSiteLocation(classLoader.getResource(HiveCatalog.HIVE_SITE_FILE));
             HiveConf hiveConf = new HiveConf();
             hiveConf.setVar(
-                    HiveConf.ConfVars.METASTOREWAREHOUSE,
+                    HiveConfVars.METASTORE_WAREHOUSE,
                     TEMPORARY_FOLDER.newFolder("hive_warehouse").getAbsolutePath());
-            hiveConf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY, warehouseUri);
+            hiveConf.setVar(HiveConfVars.METASTORE_CONNECT_URL_KEY, warehouseUri);
             return hiveConf;
         } catch (IOException e) {
             throw new CatalogException("Failed to create test HiveConf to HiveCatalog.", e);

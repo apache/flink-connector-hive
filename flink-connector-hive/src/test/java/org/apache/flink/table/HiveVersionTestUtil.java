@@ -23,6 +23,8 @@ import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
 public class HiveVersionTestUtil {
     public static final boolean HIVE_310_OR_LATER =
             HiveShimLoader.getHiveVersion().compareTo(HiveShimLoader.HIVE_VERSION_V3_1_0) >= 0;
+    public static final boolean HIVE_400_OR_LATER =
+            HiveShimLoader.getHiveVersion().compareTo(HiveShimLoader.HIVE_VERSION_V4_0_0) >= 0;
     public static final boolean HIVE_230_OR_LATER =
             HiveShimLoader.getHiveVersion().compareTo(HiveShimLoader.HIVE_VERSION_V2_3_0) >= 0;
 }

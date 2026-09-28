@@ -40,7 +40,6 @@ import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
 import org.apache.flink.table.types.logical.VarCharType;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.mapred.JobConf;
 import org.junit.jupiter.api.Test;
@@ -120,11 +119,11 @@ class HiveSourceDynamicFileEnumeratorTest {
         testTypeValues.add(
                 new Tuple3<>(
                         new VarCharType(),
-                        StringData.fromString(HiveConf.ConfVars.DEFAULTPARTITIONNAME.defaultStrVal),
-                        HiveConf.ConfVars.DEFAULTPARTITIONNAME.defaultStrVal));
+                        StringData.fromString(HiveConfVars.DEFAULT_PARTITION_NAME.defaultStrVal),
+                        HiveConfVars.DEFAULT_PARTITION_NAME.defaultStrVal));
         testTypeValues.add(
                 new Tuple3<>(
-                        new IntType(), null, HiveConf.ConfVars.DEFAULTPARTITIONNAME.defaultStrVal));
+                        new IntType(), null, HiveConfVars.DEFAULT_PARTITION_NAME.defaultStrVal));
 
         RowType rowType =
                 RowType.of(testTypeValues.stream().map(t -> t.f0).toArray(LogicalType[]::new));
@@ -158,7 +157,7 @@ class HiveSourceDynamicFileEnumeratorTest {
 
     @Test
     void testNonNullFieldTypeWithDefaultPartitionName() {
-        String defaultPartitionName = HiveConf.ConfVars.DEFAULTPARTITIONNAME.defaultStrVal;
+        String defaultPartitionName = HiveConfVars.DEFAULT_PARTITION_NAME.defaultStrVal;
         List<String> keys = Arrays.asList("NonNullString", "NonNullInt");
         Map<String, String> partitionSpec = new HashMap<>();
         partitionSpec.put("NonNullString", defaultPartitionName);

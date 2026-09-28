@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.delegation.hive.copy;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.catalog.CatalogPartitionSpec;
 import org.apache.flink.table.catalog.CatalogRegistry;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -27,6 +28,8 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
+import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
+import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
 import org.apache.flink.table.catalog.hive.util.HiveTypeUtil;
 import org.apache.flink.table.planner.delegation.hive.HiveParserConstants;
 import org.apache.flink.table.planner.delegation.hive.HiveParserRexNodeConverter;
@@ -75,8 +78,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.ql.ErrorMsg;
@@ -725,7 +728,7 @@ public class HiveParserBaseSemanticAnalyzer {
 
         HiveParserTypeCheckCtx typeCheckCtx =
                 new HiveParserTypeCheckCtx(null, frameworkConfig, cluster);
-        String defaultPartitionName = HiveConf.getVar(conf, HiveConf.ConfVars.DEFAULTPARTITIONNAME);
+        String defaultPartitionName = HiveConf.getVar(conf, HiveConfVars.DEFAULT_PARTITION_NAME);
         boolean result = true;
         for (Node childNode : astNode.getChildren()) {
             HiveParserASTNode childASTNode = (HiveParserASTNode) childNode;
@@ -1037,7 +1040,7 @@ public class HiveParserBaseSemanticAnalyzer {
     public static void processPositionAlias(HiveParserASTNode ast, HiveConf conf)
             throws SemanticException {
         boolean isBothByPos =
-                HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_GROUPBY_ORDERBY_POSITION_ALIAS);
+                HiveConf.getBoolVar(conf, HiveConfVars.HIVE_GROUPBY_ORDERBY_POSITION_ALIAS);
         boolean isGbyByPos =
                 isBothByPos
                         || Boolean.parseBoolean(conf.get("hive.groupby.position.alias", "false"));
@@ -1473,7 +1476,7 @@ public class HiveParserBaseSemanticAnalyzer {
 
     public static Map<String, Integer> buildHiveToCalciteColumnMap(HiveParserRowResolver rr) {
         Map<String, Integer> map = new HashMap<>();
-        for (ColumnInfo ci : rr.getRowSchema().getSignature()) {
+        for (ColumnInfo ci : HiveReflectionUtils.getRowSchemaSignature(rr.getRowSchema())) {
             map.put(ci.getInternalName(), rr.getPosition(ci.getInternalName()));
         }
         return Collections.unmodifiableMap(map);
@@ -1491,16 +1494,16 @@ public class HiveParserBaseSemanticAnalyzer {
     }
 
     public static boolean topLevelConjunctCheck(
-            HiveParserASTNode searchCond, ObjectPair<Boolean, Integer> subqInfo) {
+            HiveParserASTNode searchCond, MutablePair<Boolean, Integer> subqInfo) {
         if (searchCond.getType() == HiveASTParser.KW_OR) {
-            subqInfo.setFirst(Boolean.TRUE);
-            if (subqInfo.getSecond() > 1) {
+            subqInfo.setLeft(Boolean.TRUE);
+            if (subqInfo.getRight() > 1) {
                 return false;
             }
         }
         if (searchCond.getType() == HiveASTParser.TOK_SUBQUERY_EXPR) {
-            subqInfo.setSecond(subqInfo.getSecond() + 1);
-            return subqInfo.getSecond() <= 1 || !subqInfo.getFirst();
+            subqInfo.setRight(subqInfo.getRight() + 1);
+            return subqInfo.getRight() <= 1 || !subqInfo.getLeft();
         }
         for (int i = 0; i < searchCond.getChildCount(); i++) {
             boolean validSubQuery =
@@ -1750,8 +1753,12 @@ public class HiveParserBaseSemanticAnalyzer {
                     ArrayList<ObjectInspector> originalParameterTypeInfos =
                             HiveParserUtils.getWritableObjectInspector(aggParameters);
                     genericUDAFEvaluator =
-                            FunctionRegistry.getGenericWindowingEvaluator(
-                                    aggName, originalParameterTypeInfos, isDistinct, isAllColumns);
+                            HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                    .getGenericWindowingEvaluator(
+                                            aggName,
+                                            originalParameterTypeInfos,
+                                            isDistinct,
+                                            isAllColumns);
                     HiveParserBaseSemanticAnalyzer.GenericUDAFInfo udaf =
                             HiveParserUtils.getGenericUDAFInfo(
                                     genericUDAFEvaluator, amode, aggParameters);
@@ -1980,7 +1987,7 @@ public class HiveParserBaseSemanticAnalyzer {
             FrameworkConfig frameworkConfig,
             RelOptCluster cluster)
             throws SemanticException {
-        if (!HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_TYPE_CHECK_ON_INSERT)) {
+        if (!HiveConf.getBoolVar(conf, HiveConfVars.HIVE_TYPE_CHECK_ON_INSERT)) {
             return;
         }
 
@@ -2197,7 +2204,7 @@ public class HiveParserBaseSemanticAnalyzer {
                 if (numDynParts > 0) {
                     int numStaPart = parts.size() - numDynParts;
                     if (numStaPart == 0
-                            && conf.getVar(HiveConf.ConfVars.DYNAMICPARTITIONINGMODE)
+                            && conf.getVar(HiveConfVars.DYNAMIC_PARTITIONING_MODE)
                                     .equalsIgnoreCase("strict")) {
                         throw new SemanticException(
                                 ErrorMsg.DYNAMIC_PARTITION_STRICT_MODE.getMsg());

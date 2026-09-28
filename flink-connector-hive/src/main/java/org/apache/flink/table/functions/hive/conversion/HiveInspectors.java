@@ -21,6 +21,7 @@ package org.apache.flink.table.functions.hive.conversion;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
 import org.apache.flink.table.catalog.hive.client.HiveShim;
+import org.apache.flink.table.catalog.hive.client.HiveShimLoader;
 import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
 import org.apache.flink.table.catalog.hive.util.HiveTypeUtil;
 import org.apache.flink.table.functions.hive.FlinkHiveUDFException;
@@ -589,7 +590,9 @@ public class HiveInspectors {
                         getObjectInspector(mapType.getMapValueTypeInfo()));
             case STRUCT:
                 StructTypeInfo structType = (StructTypeInfo) type;
-                List<TypeInfo> fieldTypes = structType.getAllStructFieldTypeInfos();
+                List<TypeInfo> fieldTypes =
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldTypeInfos(structType);
 
                 List<ObjectInspector> fieldInspectors = new ArrayList<ObjectInspector>();
                 for (TypeInfo fieldType : fieldTypes) {
@@ -597,7 +600,9 @@ public class HiveInspectors {
                 }
 
                 return ObjectInspectorFactory.getStandardStructObjectInspector(
-                        structType.getAllStructFieldNames(), fieldInspectors);
+                        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                                .getStructFieldNames(structType),
+                        fieldInspectors);
             default:
                 throw new CatalogException("Unsupported Hive type category " + type.getCategory());
         }

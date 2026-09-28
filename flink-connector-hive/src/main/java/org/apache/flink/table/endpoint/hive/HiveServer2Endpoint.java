@@ -321,6 +321,8 @@ public class HiveServer2Endpoint implements TCLIService.Iface, SqlGatewayEndpoin
             sessionConfig.put(TABLE_SQL_DIALECT.key(), SqlDialect.HIVE.name());
             sessionConfig.put(RUNTIME_MODE.key(), RuntimeExecutionMode.BATCH.name());
             sessionConfig.put(TABLE_DML_SYNC.key(), "true");
+            // Hive 4 JDBC client requires this in the OpenSession response
+            sessionConfig.put("hive.server2.thrift.resultset.default.fetch.size", "1000");
             setVariables(conf, sessionConfig, originSessionConf);
             SessionHandle sessionHandle =
                     service.openSession(

@@ -449,5 +449,30 @@ under the License.
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Cyclic dependency avoidance:
+            flink-connector-hive-4.0.0 depends on flink-connector-hive (provided scope),
+            and the hive4 profile in flink-connector-hive adds a runtime dependency back
+            on the shim. Including both in the same reactor with -Phive4 creates a cycle.
+
+            Fix: The shim module is included via an activeByDefault profile. When -Phive4
+            is explicitly activated, Maven deactivates all activeByDefault profiles,
+            removing the shim from the reactor.
+        -->
+        <profile>
+            <id>include-hive4-shim</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>flink-connector-hive-4.0.0</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>hive4</id>
+        </profile>
+    </profiles>
 </project>
 

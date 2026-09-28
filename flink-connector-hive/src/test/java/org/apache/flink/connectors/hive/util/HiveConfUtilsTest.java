@@ -18,6 +18,8 @@
 
 package org.apache.flink.connectors.hive.util;
 
+import org.apache.flink.connectors.hive.HiveConfVars;
+
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.Test;
 
@@ -43,18 +45,18 @@ public class HiveConfUtilsTest {
     @Test
     public void testCreateHiveConf() {
         HiveConf hiveConf = createHiveConf();
-        assertThat(hiveConf.getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL)).isTrue();
+        assertThat(hiveConf.getBoolVar(HiveConfVars.METASTORE_USE_THRIFT_SASL)).isTrue();
 
         // will override configurations from `hiveConf` with hive default values which default value
         // is null or empty string
         assertThat(
                         new HiveConf(hiveConf, HiveConf.class)
-                                .getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL))
+                                .getBoolVar(HiveConfVars.METASTORE_USE_THRIFT_SASL))
                 .isFalse();
 
         assertThat(
                         HiveConfUtils.create(hiveConf)
-                                .getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL))
+                                .getBoolVar(HiveConfVars.METASTORE_USE_THRIFT_SASL))
                 .isTrue();
     }
 

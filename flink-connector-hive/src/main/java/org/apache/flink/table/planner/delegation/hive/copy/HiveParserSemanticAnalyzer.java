@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.delegation.hive.copy;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.catalog.CatalogBaseTable;
@@ -57,7 +58,6 @@ import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -80,7 +80,6 @@ import org.apache.hadoop.hive.ql.parse.PTFInvocationSpec.PTFQueryInputType;
 import org.apache.hadoop.hive.ql.parse.PrunedPartitionList;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.SplitSample;
-import org.apache.hadoop.hive.ql.plan.CreateViewDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDescUtils;
@@ -150,7 +149,7 @@ public class HiveParserSemanticAnalyzer {
     private final HashMap<String, SplitSample> nameToSplitSample;
     Map<String, PrunedPartitionList> prunedPartitions;
     public List<FieldSchema> resultSchema;
-    protected CreateViewDesc createVwDesc;
+    protected Object createVwDesc;
     protected ArrayList<String> viewsExpanded;
     protected HiveParserASTNode viewSelect;
     public final HiveParserUnparseTranslator unparseTranslator;
@@ -212,10 +211,10 @@ public class HiveParserSemanticAnalyzer {
         prunedPartitions = new HashMap<>();
         unparseTranslator = new HiveParserUnparseTranslator(conf);
         autogenColAliasPrfxLbl =
-                HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_AUTOGEN_COLUMNALIAS_PREFIX_LABEL);
+                HiveConf.getVar(conf, HiveConfVars.HIVE_AUTOGEN_COLUMNALIAS_PREFIX_LABEL);
         autogenColAliasPrfxIncludeFuncName =
                 HiveConf.getBoolVar(
-                        conf, HiveConf.ConfVars.HIVE_AUTOGEN_COLUMNALIAS_PREFIX_INCLUDEFUNCNAME);
+                        conf, HiveConfVars.HIVE_AUTOGEN_COLUMNALIAS_PREFIX_INCLUDEFUNCNAME);
         queryProperties = new QueryProperties();
         aliasToCTEs = new HashMap<>();
         globalLimitCtx = new GlobalLimitCtx();
@@ -540,7 +539,7 @@ public class HiveParserSemanticAnalyzer {
                                     (HiveParserASTNode) numerator,
                                     "Sampling percentage should be between 0 and 100"));
                 }
-                int seedNum = conf.getIntVar(ConfVars.HIVESAMPLERANDOMNUM);
+                int seedNum = conf.getIntVar(HiveConfVars.HIVE_SAMPLE_RANDOM_NUM);
                 sample = new SplitSample(percent, seedNum);
             } else if (type.getType() == HiveASTParser.TOK_ROWCOUNT) {
                 sample = new SplitSample(Integer.parseInt(value));
@@ -555,7 +554,7 @@ public class HiveParserSemanticAnalyzer {
                 } else if (last == 'g' || last == 'G') {
                     length <<= 30;
                 }
-                int seedNum = conf.getIntVar(ConfVars.HIVESAMPLERANDOMNUM);
+                int seedNum = conf.getIntVar(HiveConfVars.HIVE_SAMPLE_RANDOM_NUM);
                 sample = new SplitSample(length, seedNum);
             }
             String aliasId = getAliasId(alias, qb);
@@ -1120,8 +1119,8 @@ public class HiveParserSemanticAnalyzer {
                     qb.getParseInfo().setNoScanAnalyzeCommand(this.noscan);
                     qb.getParseInfo().setPartialScanAnalyzeCommand(this.partialscan);
                     // Allow analyze the whole table and dynamic partitions
-                    HiveConf.setVar(conf, HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
-                    HiveConf.setVar(conf, HiveConf.ConfVars.HIVEMAPREDMODE, "nonstrict");
+                    HiveConf.setVar(conf, HiveConfVars.DYNAMIC_PARTITIONING_MODE, "nonstrict");
+                    HiveConf.setVar(conf, HiveConfVars.HIVE_MAPRED_MODE, "nonstrict");
 
                     break;
 
@@ -1642,7 +1641,7 @@ public class HiveParserSemanticAnalyzer {
                                             (CatalogTable) ts.table,
                                             ts.partHandle);
                         }
-                        if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
+                        if (HiveConf.getBoolVar(conf, HiveConfVars.HIVE_STATS_AUTOGATHER)) {
                             // Add the table spec for the destination table.
                             qb.getParseInfo()
                                     .addTableSpec(
@@ -1664,9 +1663,33 @@ public class HiveParserSemanticAnalyzer {
                                 Path location;
                                 // If the CTAS query does specify a location, use the table
                                 // location, else use the db location
-                                if (qb.getTableDesc() != null
-                                        && qb.getTableDesc().getLocation() != null) {
-                                    location = new Path(qb.getTableDesc().getLocation());
+                                // Note: getTableDesc() returns Object (Hive 4 relocated
+                                // CreateTableDesc). In practice it is always null in Flink's
+                                // usage since CTAS is handled differently.
+                                Object tableDesc = qb.getTableDesc();
+                                String ctasLocation = null;
+                                String ctasDbName = null;
+                                if (tableDesc != null) {
+                                    try {
+                                        ctasLocation =
+                                                (String)
+                                                        tableDesc
+                                                                .getClass()
+                                                                .getMethod("getLocation")
+                                                                .invoke(tableDesc);
+                                        ctasDbName =
+                                                (String)
+                                                        tableDesc
+                                                                .getClass()
+                                                                .getMethod("getDatabaseName")
+                                                                .invoke(tableDesc);
+                                    } catch (Exception e) {
+                                        throw new SemanticException(
+                                                "Failed to read CreateTableDesc", e);
+                                    }
+                                }
+                                if (ctasLocation != null) {
+                                    location = new Path(ctasLocation);
                                 } else {
                                     // allocate a temporary output dir on the location of the table
                                     String tableName =
@@ -1676,19 +1699,13 @@ public class HiveParserSemanticAnalyzer {
                                         Warehouse wh = new Warehouse(conf);
                                         // Use destination table's db location.
                                         String destTableDb =
-                                                qb.getTableDesc() != null
-                                                        ? qb.getTableDesc().getDatabaseName()
-                                                        : null;
-                                        if (destTableDb == null) {
-                                            destTableDb = names[0];
-                                        }
+                                                ctasDbName != null ? ctasDbName : names[0];
                                         location = wh.getDatabasePath(db.getDatabase(destTableDb));
                                     } catch (MetaException e) {
                                         throw new SemanticException(e);
                                     }
                                 }
-                                if (HiveConf.getBoolVar(
-                                        conf, HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
+                                if (HiveConf.getBoolVar(conf, HiveConfVars.HIVE_STATS_AUTOGATHER)) {
                                     TableSpec ts =
                                             new TableSpec(
                                                     catalogRegistry,
@@ -1798,8 +1815,8 @@ public class HiveParserSemanticAnalyzer {
         // if HIVE_STATS_COLLECT_SCANCOLS is enabled, check.
         if ((!this.skipAuthorization()
                         && !qb.isInsideView()
-                        && HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED))
-                || HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_STATS_COLLECT_SCANCOLS)) {
+                        && HiveConf.getBoolVar(conf, HiveConfVars.HIVE_AUTHORIZATION_ENABLED))
+                || HiveConf.getBoolVar(conf, HiveConfVars.HIVE_STATS_COLLECT_SCANCOLS)) {
             qb.rewriteViewToSubq(alias, viewName, qbexpr, catalogView);
         } else {
             qb.rewriteViewToSubq(alias, viewName, qbexpr, null);

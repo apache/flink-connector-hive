@@ -19,10 +19,10 @@
 package org.apache.flink.connectors.hive.util;
 
 import org.apache.flink.api.java.hadoop.common.HadoopInputFormatCommonBase;
+import org.apache.flink.connectors.hive.HiveConfVars;
 import org.apache.flink.connectors.hive.JobConfWrapper;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -33,18 +33,17 @@ import java.io.IOException;
 public class JobConfUtils {
 
     /**
-     * Gets the {@link HiveConf.ConfVars#DEFAULTPARTITIONNAME} value from the {@link
-     * JobConfWrapper}.
+     * Gets the {@link HiveConfVars#DEFAULT_PARTITION_NAME} value from the {@link JobConfWrapper}.
      */
     public static String getDefaultPartitionName(JobConfWrapper confWrapper) {
         return getDefaultPartitionName(confWrapper.conf());
     }
 
-    /** Gets the {@link HiveConf.ConfVars#DEFAULTPARTITIONNAME} value from the {@link JobConf}. */
+    /** Gets the {@link HiveConfVars#DEFAULT_PARTITION_NAME} value from the {@link JobConf}. */
     public static String getDefaultPartitionName(JobConf jobConf) {
         return jobConf.get(
-                HiveConf.ConfVars.DEFAULTPARTITIONNAME.varname,
-                HiveConf.ConfVars.DEFAULTPARTITIONNAME.defaultStrVal);
+                HiveConfVars.DEFAULT_PARTITION_NAME.varname,
+                HiveConfVars.DEFAULT_PARTITION_NAME.defaultStrVal);
     }
 
     private static void addCredentialsIntoJobConf(JobConf jobConf) {

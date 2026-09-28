@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.delegation.hive.copy;
 
+import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
+
 import org.apache.hadoop.hive.ql.exec.ColumnInfo;
 import org.apache.hadoop.hive.ql.exec.RowSchema;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
@@ -129,7 +131,7 @@ public class HiveParserRowResolver implements Serializable {
             if (colAlias != null) {
                 colInfo.setAlias(colAlias.toLowerCase());
             }
-            rowSchema.getSignature().add(colInfo);
+            HiveReflectionUtils.getRowSchemaSignature(rowSchema).add(colInfo);
         }
     }
 
@@ -244,7 +246,7 @@ public class HiveParserRowResolver implements Serializable {
     }
 
     public ArrayList<ColumnInfo> getColumnInfos() {
-        return rowSchema.getSignature();
+        return new ArrayList<>(HiveReflectionUtils.getRowSchemaSignature(rowSchema));
     }
 
     // Get a list of aliases for non-hidden columns.
@@ -300,7 +302,7 @@ public class HiveParserRowResolver implements Serializable {
     public int getPosition(String internalName) {
         int pos = -1;
 
-        for (ColumnInfo var : rowSchema.getSignature()) {
+        for (ColumnInfo var : HiveReflectionUtils.getRowSchemaSignature(rowSchema)) {
             ++pos;
             if (var.getInternalName().equals(internalName)) {
                 return pos;
@@ -370,7 +372,8 @@ public class HiveParserRowResolver implements Serializable {
         int i = 0;
 
         int outputColPos = outputColPosRef == null ? 0 : outputColPosRef.val;
-        for (ColumnInfo cInfoFrmInput : rrToAddFrom.getRowSchema().getSignature()) {
+        for (ColumnInfo cInfoFrmInput :
+                HiveReflectionUtils.getRowSchemaSignature(rrToAddFrom.getRowSchema())) {
             if (numColumns >= 0 && i == numColumns) {
                 break;
             }

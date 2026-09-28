@@ -18,22 +18,24 @@
 
 package org.apache.flink.table.planner.delegation.hive.copy;
 
+import org.apache.flink.table.catalog.hive.client.HiveShim;
 import org.apache.flink.table.planner.delegation.hive.parse.HiveASTParser;
 
 import org.apache.hadoop.hive.metastore.api.PrincipalType;
-import org.apache.hadoop.hive.ql.plan.PrincipalDesc;
 
 /** Counterpart of hive's org.apache.hadoop.hive.ql.parse.authorization.AuthorizationParseUtils. */
 public class HiveParserAuthorizationParseUtils {
 
     private HiveParserAuthorizationParseUtils() {}
 
-    public static PrincipalDesc getPrincipalDesc(HiveParserASTNode principal) {
+    // TODO: Returns Object because PrincipalDesc moved packages in Hive 4
+    // (ql.plan -> ql.ddl.privilege). Consider a typed wrapper for better type safety.
+    public static Object getPrincipalDesc(HiveShim hiveShim, HiveParserASTNode principal) {
         PrincipalType type = getPrincipalType(principal);
         if (type != null) {
             String text = principal.getChild(0).getText();
             String principalName = HiveParserBaseSemanticAnalyzer.unescapeIdentifier(text);
-            return new PrincipalDesc(principalName, type);
+            return hiveShim.createPrincipalDesc(principalName, type);
         }
         return null;
     }

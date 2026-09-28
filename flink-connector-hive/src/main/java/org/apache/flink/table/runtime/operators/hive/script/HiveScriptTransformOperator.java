@@ -32,6 +32,7 @@ import org.apache.flink.table.runtime.script.ScriptTransformIOInfo;
 import org.apache.flink.table.runtime.util.StreamRecordCollector;
 import org.apache.flink.table.types.logical.LogicalType;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.RecordReader;
 import org.apache.hadoop.hive.ql.exec.RecordWriter;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -223,8 +224,9 @@ public class HiveScriptTransformOperator extends TableStreamOperator<RowData>
         AbstractSerDe abstractSerDe = (AbstractSerDe) serdeClz.newInstance();
         Properties properties = new Properties();
         properties.putAll(props);
-        abstractSerDe.initialize(
-                ((JobConfWrapper) scriptTransformIOInfo.getSerializableConf()).conf(), properties);
+        Configuration conf = ((JobConfWrapper) scriptTransformIOInfo.getSerializableConf()).conf();
+        HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion())
+                .initializeSerDe(abstractSerDe, conf, properties, null);
         return abstractSerDe;
     }
 

@@ -25,8 +25,10 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.TableType;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.ql.udf.generic.SimpleGenericUDAFParameterInfo;
@@ -37,6 +39,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /** Shim for Hive version 2.3.0. */
 public class HiveShimV230 extends HiveShimV220 {
@@ -130,5 +133,31 @@ public class HiveShimV230 extends HiveShimV220 {
         } catch (Exception e) {
             throw new FlinkHiveException(e);
         }
+    }
+
+    @Override
+    public List<ColumnStatisticsObj> getTableColumnStatistics(
+            IMetaStoreClient client,
+            String databaseName,
+            String tableName,
+            List<String> columnNames)
+            throws TException {
+        return client.getTableColumnStatistics(databaseName, tableName, columnNames);
+    }
+
+    @Override
+    public Map<String, List<ColumnStatisticsObj>> getPartitionColumnStatistics(
+            IMetaStoreClient client,
+            String dbName,
+            String tableName,
+            List<String> partNames,
+            List<String> colNames)
+            throws TException {
+        return client.getPartitionColumnStatistics(dbName, tableName, partNames, colNames);
+    }
+
+    @Override
+    public Object createPrincipalDesc(String principalName, PrincipalType principalType) {
+        return new org.apache.hadoop.hive.ql.plan.PrincipalDesc(principalName, principalType);
     }
 }
