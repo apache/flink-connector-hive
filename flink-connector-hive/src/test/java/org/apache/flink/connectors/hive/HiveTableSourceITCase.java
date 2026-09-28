@@ -66,11 +66,12 @@ import org.apache.flink.util.FileUtils;
 import org.apache.calcite.rel.RelNode;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import javax.annotation.Nullable;
 
@@ -87,6 +88,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.flink.table.catalog.hive.HiveTestUtils.createTableEnvWithHiveCatalog;
 import static org.apache.flink.table.planner.utils.JavaScalaConversionUtil.toScala;
@@ -97,32 +99,32 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 /** Tests {@link HiveTableSource}. */
-public class HiveTableSourceITCase extends BatchAbstractTestBase {
+class HiveTableSourceITCase extends BatchAbstractTestBase {
 
     private static HiveCatalog hiveCatalog;
     private static TableEnvironment batchTableEnv;
 
-    @BeforeClass
-    public static void createCatalog() {
+    @BeforeAll
+    static void createCatalog() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
         batchTableEnv = createTableEnv();
     }
 
-    @AfterClass
-    public static void closeCatalog() {
+    @AfterAll
+    static void closeCatalog() {
         if (null != hiveCatalog) {
             hiveCatalog.close();
         }
     }
 
-    @Before
-    public void setupSourceDatabaseAndData() {
+    @BeforeEach
+    void setupSourceDatabaseAndData() {
         batchTableEnv.executeSql("CREATE DATABASE IF NOT EXISTS source_db");
     }
 
     @Test
-    public void testReadNonPartitionedTable() throws Exception {
+    void testReadNonPartitionedTable() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test";
         batchTableEnv.executeSql(
@@ -145,7 +147,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testReadComplexDataType() throws Exception {
+    void testReadComplexDataType() throws Exception {
         final String dbName = "source_db";
         final String tblName = "complex_test";
         batchTableEnv.executeSql(
@@ -168,7 +170,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testReadParquetComplexDataType() throws Exception {
+    void testReadParquetComplexDataType() throws Exception {
         batchTableEnv.executeSql(
                 "create table parquet_complex_type_test("
                         + "a array<int>, m map<int,string>, s struct<f1:int,f2:bigint>) stored as parquet");
@@ -197,7 +199,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
      * @throws Exception
      */
     @Test
-    public void testReadPartitionTable() throws Exception {
+    void testReadPartitionTable() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test_table_pt";
         batchTableEnv.executeSql(
@@ -224,7 +226,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testPartitionPrunning() throws Exception {
+    void testPartitionPrunning() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test_table_pt_1";
         batchTableEnv.executeSql(
@@ -272,7 +274,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testPartitionFilter() throws Exception {
+    void testPartitionFilter() throws Exception {
         FlinkVersion curFlinkVersion = FlinkVersion.current();
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         TestPartitionFilterCatalog catalog =
@@ -389,7 +391,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testPartitionFilterDateTimestamp() throws Exception {
+    void testPartitionFilterDateTimestamp() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.HIVE);
         TestPartitionFilterCatalog catalog =
                 new TestPartitionFilterCatalog(
@@ -438,7 +440,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testProjectionPushDown() throws Exception {
+    void testProjectionPushDown() throws Exception {
         batchTableEnv.executeSql(
                 "create table src(x int,y string) partitioned by (p1 bigint, p2 string)");
         try {
@@ -468,7 +470,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testLimitPushDown() throws Exception {
+    void testLimitPushDown() throws Exception {
         batchTableEnv.executeSql("create table src (a string)");
         try {
             HiveTestUtils.createTextTableInserter(hiveCatalog, "default", "src")
@@ -495,7 +497,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testParallelismSetting() throws Exception {
+    void testParallelismSetting() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test_parallelism";
         batchTableEnv.executeSql(
@@ -516,7 +518,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testParallelismSettingWithFileNum() throws IOException {
+    void testParallelismSettingWithFileNum() throws IOException {
         // create test files
         File dir = Files.createTempDirectory("testParallelismSettingWithFileNum").toFile();
         dir.deleteOnExit();
@@ -555,7 +557,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testParallelismOnLimitPushDown() throws Exception {
+    void testParallelismOnLimitPushDown() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test_parallelism_limit_pushdown";
         TableEnvironment tEnv = createTableEnv();
@@ -591,7 +593,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testParallelismWithoutParallelismInfer() throws Exception {
+    void testParallelismWithoutParallelismInfer() throws Exception {
         final String dbName = "source_db";
         final String tblName = "test_parallelism_no_infer";
         TableEnvironment tEnv = TableEnvironment.create(EnvironmentSettings.inBatchMode());
@@ -632,9 +634,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testSourceConfig() throws Exception {
+    void testSourceConfig() throws Exception {
         // vector reader not available for 1.x and we're not testing orc for 2.0.x
-        Assume.assumeTrue(HiveVersionTestUtil.HIVE_230_OR_LATER);
+        Assumptions.assumeTrue(HiveVersionTestUtil.HIVE_230_OR_LATER);
         Map<String, String> env = System.getenv();
         batchTableEnv.executeSql("create database db1");
         try {
@@ -648,8 +650,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         }
     }
 
-    @Test(timeout = 120000)
-    public void testStreamPartitionReadByPartitionName() throws Exception {
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void testStreamPartitionReadByPartitionName() throws Exception {
         final String catalogName = "hive";
         final String dbName = "source_db";
         final String tblName = "stream_partition_name_test";
@@ -704,8 +707,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         result.getJobClient().get().cancel();
     }
 
-    @Test(timeout = 120000)
-    public void testStreamPartitionReadByCreateTime() throws Exception {
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void testStreamPartitionReadByCreateTime() throws Exception {
         final String catalogName = "hive";
         final String dbName = "source_db";
         final String tblName = "stream_create_time_test";
@@ -759,8 +763,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         result.getJobClient().get().cancel();
     }
 
-    @Test(timeout = 120000)
-    public void testStreamPartitionReadByPartitionTime() throws Exception {
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void testStreamPartitionReadByPartitionTime() throws Exception {
         final String catalogName = "hive";
         final String dbName = "source_db";
         final String tblName = "stream_test";
@@ -823,13 +828,15 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         return strings;
     }
 
-    @Test(timeout = 30000)
-    public void testNonPartitionStreamingSourceWithMapredReader() throws Exception {
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    void testNonPartitionStreamingSourceWithMapredReader() throws Exception {
         testNonPartitionStreamingSource(true, "test_mapred_reader");
     }
 
-    @Test(timeout = 30000)
-    public void testNonPartitionStreamingSourceWithVectorizedReader() throws Exception {
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    void testNonPartitionStreamingSourceWithVectorizedReader() throws Exception {
         testNonPartitionStreamingSource(false, "test_vectorized_reader");
     }
 
@@ -924,7 +931,7 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
     }
 
     @Test
-    public void testParquetCaseInsensitive() throws Exception {
+    void testParquetCaseInsensitive() throws Exception {
         testCaseInsensitive("parquet");
     }
 
@@ -951,8 +958,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
                 .isEqualTo(Row.of(1, 2));
     }
 
-    @Test(timeout = 120000)
-    public void testStreamReadWithProjectPushDown() throws Exception {
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void testStreamReadWithProjectPushDown() throws Exception {
         final String catalogName = "hive";
         final String dbName = "source_db";
         final String tblName = "stream_project_pushdown_test";
@@ -1006,8 +1014,9 @@ public class HiveTableSourceITCase extends BatchAbstractTestBase {
         result.getJobClient().get().cancel();
     }
 
-    @Test(timeout = 120000)
-    public void testReadParquetWithNullableComplexType() throws Exception {
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void testReadParquetWithNullableComplexType() throws Exception {
         final String catalogName = "hive";
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);

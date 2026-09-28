@@ -35,9 +35,9 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.CollectionUtil;
 
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,25 +51,25 @@ import static org.apache.flink.table.factories.FactoryUtil.CONNECTOR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** IT case for {@link HiveSource}. */
-public class HiveSourceITCase {
+class HiveSourceITCase {
 
     private static HiveCatalog hiveCatalog;
 
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    static void setup() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
     }
 
-    @AfterClass
-    public static void tearDown() {
+    @AfterAll
+    static void tearDown() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
     }
 
     @Test
-    public void testRegularRead() throws Exception {
+    void testRegularRead() throws Exception {
         // test non-partitioned table
         ObjectPath tablePath = new ObjectPath("default", "tbl1");
         Map<String, String> tableOptions = new HashMap<>();

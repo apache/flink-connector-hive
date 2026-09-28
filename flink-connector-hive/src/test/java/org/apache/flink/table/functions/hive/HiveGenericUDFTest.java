@@ -37,8 +37,8 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDFDecode;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFMapKeys;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFStringToMap;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFStruct;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
@@ -55,12 +55,12 @@ import static org.apache.flink.table.HiveVersionTestUtil.HIVE_310_OR_LATER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HiveGenericUDF}. */
-public class HiveGenericUDFTest {
+class HiveGenericUDFTest {
     private static final HiveShim hiveShim =
             HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion());
 
     @Test
-    public void testAbs() {
+    void testAbs() {
         HiveGenericUDF udf =
                 init(GenericUDFAbs.class, new Object[] {null}, new DataType[] {DataTypes.DOUBLE()});
 
@@ -76,8 +76,8 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testAddMonths() throws Exception {
-        Assume.assumeTrue(HIVE_230_OR_LATER);
+    void testAddMonths() throws Exception {
+        Assumptions.assumeTrue(HIVE_230_OR_LATER);
         HiveGenericUDF udf =
                 init(
                         Class.forName("org.apache.hadoop.hive.ql.udf.generic.GenericUDFAddMonths"),
@@ -89,8 +89,8 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testDateFormat() throws Exception {
-        Assume.assumeTrue(HIVE_310_OR_LATER);
+    void testDateFormat() throws Exception {
+        Assumptions.assumeTrue(HIVE_310_OR_LATER);
         String constYear = "y";
         String constMonth = "M";
 
@@ -112,7 +112,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testDecode() {
+    void testDecode() {
         String constDecoding = "UTF-8";
 
         HiveGenericUDF udf =
@@ -128,7 +128,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testCase() {
+    void testCase() {
         HiveGenericUDF udf =
                 init(
                         GenericUDFCase.class,
@@ -145,7 +145,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testCeil() {
+    void testCeil() {
         HiveGenericUDF udf =
                 init(
                         GenericUDFCeil.class,
@@ -164,7 +164,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testCoalesce() {
+    void testCoalesce() {
         HiveGenericUDF udf =
                 init(
                         GenericUDFCoalesce.class,
@@ -175,7 +175,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testDateDiff()
+    void testDateDiff()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 
         String d = "1969-07-20";
@@ -215,7 +215,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testArray() {
+    void testArray() {
         HiveGenericUDF udf =
                 init(
                         TestGenericUDFArray.class,
@@ -227,7 +227,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testMap() {
+    void testMap() {
         // test output as map
         String testInput = "1:1,2:2,3:3";
 
@@ -261,7 +261,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testStruct() {
+    void testStruct() {
         HiveGenericUDF udf =
                 init(
                         GenericUDFStruct.class,
@@ -287,7 +287,7 @@ public class HiveGenericUDFTest {
     }
 
     @Test
-    public void testInitUDFWithConstantArguments() {
+    void testInitUDFWithConstantArguments() {
         // test init udf with different type of constants as arguments to
         // make sure we can get the ConstantObjectInspector normally
 

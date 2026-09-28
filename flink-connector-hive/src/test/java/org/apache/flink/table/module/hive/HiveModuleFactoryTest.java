@@ -21,16 +21,16 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.module.Module;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HiveModuleFactory}. */
-public class HiveModuleFactoryTest {
+class HiveModuleFactoryTest {
     @Test
-    public void test() {
+    void test() {
         final HiveModule expected = new HiveModule();
 
         final Module actualModule =

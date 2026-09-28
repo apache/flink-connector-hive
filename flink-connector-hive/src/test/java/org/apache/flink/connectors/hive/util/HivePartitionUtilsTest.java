@@ -19,11 +19,11 @@
 package org.apache.flink.connectors.hive.util;
 
 import org.apache.flink.connectors.hive.HiveTablePartition;
+import org.apache.flink.table.catalog.hive.HiveTestUtils;
 
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -37,15 +37,16 @@ import java.util.Properties;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HivePartitionUtils}. */
-public class HivePartitionUtilsTest {
+class HivePartitionUtilsTest {
 
-    @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir private Path temporaryFolder;
 
     @Test
-    public void testHiveTablePartitionSerDe() throws Exception {
+    void testHiveTablePartitionSerDe() throws Exception {
         String baseFilePath =
                 Objects.requireNonNull(this.getClass().getResource("/orc/test.orc")).getPath();
-        File wareHouse = temporaryFolder.newFolder("testHiveTablePartitionSerDe");
+        File wareHouse =
+                HiveTestUtils.createTempSubDir(temporaryFolder, "testHiveTablePartitionSerDe");
         int partitionNum = 10;
         List<HiveTablePartition> expectedHiveTablePartitions = new ArrayList<>();
         for (int i = 0; i < partitionNum; i++) {

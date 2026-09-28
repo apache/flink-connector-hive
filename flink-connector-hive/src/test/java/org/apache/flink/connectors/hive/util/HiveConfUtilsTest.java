@@ -19,7 +19,7 @@
 package org.apache.flink.connectors.hive.util;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HiveConfUtils}. */
-public class HiveConfUtilsTest {
+class HiveConfUtilsTest {
     private static final String HIVE_SITE_CONTENT =
             "<?xml version=\"1.0\"?>\n"
                     + "<?xml-stylesheet type=\"text/xsl\" href=\"configuration.xsl\"?>\n"
@@ -41,7 +41,7 @@ public class HiveConfUtilsTest {
                     + "</configuration>\n";
 
     @Test
-    public void testCreateHiveConf() {
+    void testCreateHiveConf() {
         HiveConf hiveConf = createHiveConf();
         assertThat(hiveConf.getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL)).isTrue();
 

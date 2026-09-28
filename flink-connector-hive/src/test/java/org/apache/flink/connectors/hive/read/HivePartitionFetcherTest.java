@@ -37,7 +37,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,10 +49,10 @@ import static org.apache.flink.connectors.hive.HiveOptions.STREAMING_SOURCE_PART
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for hive partition fetch implementations. */
-public class HivePartitionFetcherTest {
+class HivePartitionFetcherTest {
 
     @Test
-    public void testIgnoreNonExistPartition() throws Exception {
+    void testIgnoreNonExistPartition() throws Exception {
         // it's possible a partition path exists but the partition is not added to HMS, e.g. the
         // partition is still being loaded, or the path is simply misplaced
         // make sure the fetch can ignore such paths

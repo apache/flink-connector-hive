@@ -38,8 +38,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
@@ -55,13 +55,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Unit tests for {@link HiveDynamicTableFactory}. */
-public class HiveDynamicTableFactoryTest {
+class HiveDynamicTableFactoryTest {
 
     private static TableEnvironment tableEnv;
     private static HiveCatalog hiveCatalog;
 
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    static void setup() {
         tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
@@ -70,7 +70,7 @@ public class HiveDynamicTableFactoryTest {
     }
 
     @Test
-    public void testHiveStreamingSourceOptions() throws Exception {
+    void testHiveStreamingSourceOptions() throws Exception {
         // test default hive streaming-source is not a lookup source
         tableEnv.executeSql(
                 String.format(
@@ -117,7 +117,7 @@ public class HiveDynamicTableFactoryTest {
     }
 
     @Test
-    public void testHiveLookupSourceOptions() throws Exception {
+    void testHiveLookupSourceOptions() throws Exception {
         // test hive bounded source is a lookup source
         tableEnv.executeSql(
                 String.format(
@@ -193,7 +193,7 @@ public class HiveDynamicTableFactoryTest {
     }
 
     @Test
-    public void testInvalidOptions() {
+    void testInvalidOptions() {
         tableEnv.executeSql(
                 String.format(
                         "create table table9 (x int, y string, z int)"
@@ -210,7 +210,7 @@ public class HiveDynamicTableFactoryTest {
     }
 
     @Test
-    public void testJobConfWithCredentials() throws Exception {
+    void testJobConfWithCredentials() throws Exception {
         final Text hdfsDelegationTokenKind = new Text("HDFS_DELEGATION_TOKEN");
         final Text hdfsDelegationTokenService = new Text("ha-hdfs:hadoop-namespace");
         Credentials credentials = new Credentials();

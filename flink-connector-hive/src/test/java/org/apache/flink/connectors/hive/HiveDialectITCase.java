@@ -72,12 +72,10 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDFAbs;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.net.URI;
@@ -90,18 +88,19 @@ import static org.apache.flink.core.testutils.FlinkAssertions.anyCauseMatches;
 import static org.apache.flink.table.catalog.hive.util.Constants.TABLE_LOCATION_URI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /** Test Hive syntax when Hive dialect is used. */
-public class HiveDialectITCase {
+class HiveDialectITCase {
 
-    @ClassRule public static TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir static java.nio.file.Path tempFolder;
 
     private TableEnvironment tableEnv;
     private HiveCatalog hiveCatalog;
     private String warehouse;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog
                 .getHiveConf()
@@ -115,8 +114,8 @@ public class HiveDialectITCase {
         tableEnv.useCatalog(hiveCatalog.getName());
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
@@ -126,7 +125,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testPluggableParser() {
+    void testPluggableParser() {
         TableEnvironmentInternal tableEnvInternal = (TableEnvironmentInternal) tableEnv;
         Parser parser = tableEnvInternal.getParser();
         // hive dialect should use HiveParser
@@ -141,7 +140,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testParseCommand() {
+    void testParseCommand() {
         TableEnvironmentInternal tableEnvInternal = (TableEnvironmentInternal) tableEnv;
         Parser parser = tableEnvInternal.getParser();
 
@@ -154,7 +153,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testCreateDatabase() throws Exception {
+    void testCreateDatabase() throws Exception {
         tableEnv.executeSql("create database db1 comment 'db1 comment'");
         Database db = hiveCatalog.getHiveDatabase("db1");
         assertThat(db.getDescription()).isEqualTo("db1 comment");
@@ -170,7 +169,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testAlterDatabase() throws Exception {
+    void testAlterDatabase() throws Exception {
         // alter properties
         tableEnv.executeSql("create database db1 with dbproperties('k1'='v1')");
         tableEnv.executeSql("alter database db1 set dbproperties ('k1'='v11','k2'='v2')");
@@ -199,7 +198,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testCreateTable() throws Exception {
+    void testCreateTable() throws Exception {
         String location = warehouse + "/external_location";
         tableEnv.executeSql(
                 String.format(
@@ -295,8 +294,8 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testCreateTableWithConstraints() throws Exception {
-        Assume.assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
+    void testCreateTableWithConstraints() throws Exception {
+        assumeTrue(HiveVersionTestUtil.HIVE_310_OR_LATER);
         tableEnv.executeSql(
                 "create table tbl (x int,y int not null disable novalidate rely,z int not null disable novalidate norely,"
                         + "constraint pk_name primary key (x) disable rely)");
@@ -319,7 +318,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testCreateTableAs() throws Exception {
+    void testCreateTableAs() throws Exception {
         tableEnv.executeSql("create table src (x int,y string)");
         tableEnv.executeSql("create table tbl1 as select x from src group by x").await();
         Table hiveTable = hiveCatalog.getHiveTable(new ObjectPath("default", "tbl1"));
@@ -340,7 +339,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testInsert() throws Exception {
+    void testInsert() throws Exception {
         // src table
         tableEnv.executeSql("create table src (x int,y string)");
         tableEnv.executeSql("insert into src values (1,'a'),(2,'b'),(3,'c')").await();
@@ -393,7 +392,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testInsertOverwrite() throws Exception {
+    void testInsertOverwrite() throws Exception {
         tableEnv.executeSql("create table T1(a int, b string)");
         tableEnv.executeSql("insert into T1 values(1, 'v1')").await();
         tableEnv.executeSql("create table T2(a int, b string) partitioned by (dt string)");
@@ -410,7 +409,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testAlterTable() throws Exception {
+    void testAlterTable() throws Exception {
         tableEnv.executeSql("create table tbl (x int) tblproperties('k1'='v1')");
         tableEnv.executeSql("alter table tbl rename to tbl1");
 
@@ -541,7 +540,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testAlterPartition() throws Exception {
+    void testAlterPartition() throws Exception {
         tableEnv.executeSql(
                 "create table tbl (x tinyint,y string) partitioned by (p1 bigint,p2 date)");
         tableEnv.executeSql(
@@ -598,7 +597,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testTableWithSubDirsInPartitionDir() throws Exception {
+    void testTableWithSubDirsInPartitionDir() throws Exception {
         tableEnv.executeSql("CREATE TABLE fact_tz(x int) PARTITIONED BY (ds STRING, hr STRING)");
         tableEnv.executeSql("INSERT OVERWRITE TABLE fact_tz PARTITION (ds='1', hr='1') select 1")
                 .await();
@@ -642,7 +641,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testView() throws Exception {
+    void testView() throws Exception {
         tableEnv.executeSql("create table tbl (x int,y string)");
 
         // create
@@ -677,7 +676,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testFunction() throws Exception {
+    void testFunction() throws Exception {
         // create function
         tableEnv.executeSql(
                 String.format(
@@ -697,7 +696,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testTemporaryFunction() throws Exception {
+    void testTemporaryFunction() throws Exception {
         // create temp function
         tableEnv.executeSql(
                 String.format(
@@ -725,7 +724,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testTemporaryFunctionUDAF() throws Exception {
+    void testTemporaryFunctionUDAF() throws Exception {
         // create temp function
         tableEnv.executeSql(
                 String.format(
@@ -753,7 +752,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testCreateFunctionUsingJar() throws Exception {
+    void testCreateFunctionUsingJar() throws Exception {
         tableEnv.executeSql("create table src(x int)");
         tableEnv.executeSql("insert into src values (1), (2)").await();
         String udfCodeTemplate =
@@ -767,7 +766,10 @@ public class HiveDialectITCase {
         String udfCode = String.format(udfCodeTemplate, udfClass);
         File jarFile =
                 UserClassLoaderJarTestUtils.createJarFile(
-                        tempFolder.newFolder("test-jar"), "test-udf.jar", udfClass, udfCode);
+                        HiveTestUtils.createTempSubDir(tempFolder, "test-jar"),
+                        "test-udf.jar",
+                        udfClass,
+                        udfCode);
         // test create function using jar
         tableEnv.executeSql(
                 String.format(
@@ -785,7 +787,10 @@ public class HiveDialectITCase {
         udfCode = String.format(udfCodeTemplate, udfClass);
         jarFile =
                 UserClassLoaderJarTestUtils.createJarFile(
-                        tempFolder.newFolder("test-jar-1"), "test-udf-1.jar", udfClass, udfCode);
+                        HiveTestUtils.createTempSubDir(tempFolder, "test-jar-1"),
+                        "test-udf-1.jar",
+                        udfClass,
+                        udfCode);
         tableEnv.executeSql(
                 String.format(
                         "create temporary function t_add_one as '%s' using jar '%s'",
@@ -799,7 +804,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testTemporaryFunctionUDTF() throws Exception {
+    void testTemporaryFunctionUDTF() throws Exception {
         // function initialize with ObjectInspector
         tableEnv.executeSql(
                 String.format(
@@ -854,7 +859,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testAddDropPartitions() throws Exception {
+    void testAddDropPartitions() throws Exception {
         tableEnv.executeSql(
                 "create table tbl (x int,y binary) partitioned by (dt date,country string)");
         tableEnv.executeSql(
@@ -886,7 +891,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testShowPartitions() throws Exception {
+    void testShowPartitions() throws Exception {
         tableEnv.executeSql(
                 "create table tbl (x int,y binary) partitioned by (dt date, country string)");
         tableEnv.executeSql(
@@ -1001,7 +1006,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testMacro() throws Exception {
+    void testMacro() throws Exception {
         tableEnv.executeSql("create temporary macro string_len (x string) length(x)");
         tableEnv.executeSql("create temporary macro string_len_plus(x string) length(x) + 1");
         tableEnv.executeSql("create table macro_test (x string)");
@@ -1047,7 +1052,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testSetCommand() throws Exception {
+    void testSetCommand() throws Exception {
         // test set system:
         tableEnv.executeSql("set system:xxx=5");
         assertThat(System.getProperty("xxx")).isEqualTo("5");
@@ -1140,7 +1145,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testAddCommand() {
+    void testAddCommand() {
         TableEnvironmentInternal tableEnvInternal = (TableEnvironmentInternal) tableEnv;
         Parser parser = tableEnvInternal.getParser();
 
@@ -1167,7 +1172,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testShowCreateTable() throws Exception {
+    void testShowCreateTable() throws Exception {
         tableEnv.getConfig().setSqlDialect(SqlDialect.DEFAULT);
         tableEnv.executeSql(
                 "create table t1(id BIGINT,\n"
@@ -1230,7 +1235,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testDescribeTable() {
+    void testDescribeTable() {
         tableEnv.getConfig().setSqlDialect(SqlDialect.DEFAULT);
         tableEnv.executeSql(
                 "create table t1(id BIGINT,\n"
@@ -1263,7 +1268,7 @@ public class HiveDialectITCase {
     }
 
     @Test
-    public void testUnsupportedOperation() {
+    void testUnsupportedOperation() {
         List<String> statements =
                 Arrays.asList(
                         "create or replace view v as select x from foo",

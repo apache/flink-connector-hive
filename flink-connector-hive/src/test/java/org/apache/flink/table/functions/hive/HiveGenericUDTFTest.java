@@ -39,7 +39,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,13 +52,14 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link HiveGenericUDTF}. */
+// Kept public: referenced from HiveDialectITCase in a different package.
 public class HiveGenericUDTFTest {
     private static HiveShim hiveShim = HiveShimLoader.loadHiveShim(HiveShimLoader.getHiveVersion());
 
     private static TestCollector collector;
 
     @Test
-    public void testOverSumInt() throws Exception {
+    void testOverSumInt() throws Exception {
         Object[] constantArgs = new Object[] {null, 4};
 
         DataType[] dataTypes = new DataType[] {DataTypes.INT(), DataTypes.INT()};
@@ -82,7 +83,7 @@ public class HiveGenericUDTFTest {
     }
 
     @Test
-    public void testSplit() throws Exception {
+    void testSplit() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] dataTypes = new DataType[] {DataTypes.STRING()};
@@ -96,7 +97,7 @@ public class HiveGenericUDTFTest {
     }
 
     @Test
-    public void testStack() throws Exception {
+    void testStack() throws Exception {
         Object[] constantArgs = new Object[] {2, null, null, null, null};
 
         DataType[] dataTypes =
@@ -116,7 +117,7 @@ public class HiveGenericUDTFTest {
     }
 
     @Test
-    public void testArray() throws Exception {
+    void testArray() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] dataTypes = new DataType[] {DataTypes.ARRAY(DataTypes.INT())};
@@ -130,7 +131,7 @@ public class HiveGenericUDTFTest {
     }
 
     @Test
-    public void testStruct() throws Exception {
+    void testStruct() throws Exception {
         Object[] constantArgs = new Object[] {null};
 
         DataType[] dataTypes =

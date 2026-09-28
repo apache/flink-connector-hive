@@ -31,8 +31,9 @@ import org.apache.flink.table.utils.LegacyRowResource;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CollectionUtil;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,12 +43,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Test for {@link HiveModule}. */
-public class HiveModuleTest {
+class HiveModuleTest {
 
-    @Rule public final LegacyRowResource usesLegacyRows = LegacyRowResource.INSTANCE;
+    private final LegacyRowResource usesLegacyRows = LegacyRowResource.INSTANCE;
+
+    @BeforeEach
+    void setUpLegacyRows() {
+        usesLegacyRows.before();
+    }
+
+    @AfterEach
+    void tearDownLegacyRows() {
+        usesLegacyRows.after();
+    }
 
     @Test
-    public void testNumberOfBuiltinFunctions() {
+    void testNumberOfBuiltinFunctions() {
         String hiveVersion = HiveShimLoader.getHiveVersion();
         HiveModule hiveModule = new HiveModule(hiveVersion);
         verifyNumBuiltInFunctions(hiveVersion, hiveModule);
@@ -81,7 +92,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testHiveBuiltInFunction() {
+    void testHiveBuiltInFunction() {
         FunctionDefinition fd = new HiveModule().getFunctionDefinition("reverse").get();
         HiveSimpleUDF udf = (HiveSimpleUDF) fd;
 
@@ -99,12 +110,12 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testNonExistFunction() {
+    void testNonExistFunction() {
         assertThat(new HiveModule().getFunctionDefinition("nonexist")).isNotPresent();
     }
 
     @Test
-    public void testConstantArguments() {
+    void testConstantArguments() {
         TableEnvironment tEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tEnv.unloadModule("core");
@@ -144,7 +155,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testDecimalReturnType() {
+    void testDecimalReturnType() {
         TableEnvironment tEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tEnv.unloadModule("core");
@@ -158,7 +169,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testBlackList() {
+    void testBlackList() {
         HiveModule hiveModule = new HiveModule();
         assertThat(hiveModule.listFunctions().removeAll(HiveModule.BUILT_IN_FUNC_BLACKLIST))
                 .isFalse();
@@ -168,7 +179,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testConstantReturnValue() {
+    void testConstantReturnValue() {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tableEnv.unloadModule("core");
@@ -184,7 +195,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testEmptyStringLiteralParameters() {
+    void testEmptyStringLiteralParameters() {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tableEnv.unloadModule("core");
@@ -206,7 +217,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testFunctionsNeedSessionState() {
+    void testFunctionsNeedSessionState() {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tableEnv.unloadModule("core");
@@ -222,7 +233,7 @@ public class HiveModuleTest {
     }
 
     @Test
-    public void testCallUDFWithNoParam() {
+    void testCallUDFWithNoParam() {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
 
         tableEnv.unloadModule("core");

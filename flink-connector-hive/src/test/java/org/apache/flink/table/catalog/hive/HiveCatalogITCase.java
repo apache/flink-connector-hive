@@ -48,11 +48,10 @@ import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.FileUtils;
 
 import com.google.common.collect.Lists;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -87,30 +86,30 @@ import static org.assertj.core.api.Assertions.assertThat;
  * IT case for HiveCatalog. TODO: move to flink-connector-hive-test end-to-end test module once it's
  * setup
  */
-public class HiveCatalogITCase {
+class HiveCatalogITCase {
 
-    @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir Path tempFolder;
 
     private static HiveCatalog hiveCatalog;
 
     private String sourceTableName = "csv_source";
     private String sinkTableName = "csv_sink";
 
-    @BeforeClass
-    public static void createCatalog() {
+    @BeforeAll
+    static void createCatalog() {
         hiveCatalog = HiveTestUtils.createHiveCatalog();
         hiveCatalog.open();
     }
 
-    @AfterClass
-    public static void closeCatalog() {
+    @AfterAll
+    static void closeCatalog() {
         if (hiveCatalog != null) {
             hiveCatalog.close();
         }
     }
 
     @Test
-    public void testCsvTableViaSQL() {
+    void testCsvTableViaSQL() {
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inBatchMode());
 
         tableEnv.registerCatalog("myhive", hiveCatalog);
@@ -149,7 +148,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testCsvTableViaAPI() throws Exception {
+    void testCsvTableViaAPI() throws Exception {
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inBatchMode());
         tableEnv.getConfig()
                 .addConfiguration(new Configuration().set(CoreOptions.DEFAULT_PARALLELISM, 1));
@@ -179,7 +178,10 @@ public class HiveCatalogITCase {
                                 sourceOptions),
                         resolvedSchema);
 
-        Path p = Paths.get(tempFolder.newFolder().getAbsolutePath(), "test.csv");
+        Path p =
+                Paths.get(
+                        HiveTestUtils.createTempSubDir(tempFolder, "csvApi").toString(),
+                        "test.csv");
 
         final Map<String, String> sinkOptions = new HashMap<>();
         sinkOptions.put("connector.type", "filesystem");
@@ -233,7 +235,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testReadWriteCsv() throws Exception {
+    void testReadWriteCsv() throws Exception {
         // similar to CatalogTableITCase::testReadWriteCsvUsingDDL but uses HiveCatalog
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         tableEnv.getConfig().set(TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, 1);
@@ -250,7 +252,10 @@ public class HiveCatalogITCase {
                                 "WITH ('connector.type' = 'filesystem','connector.path' = 'file://%s','format.type' = 'csv')",
                                 srcPath));
 
-        String sinkPath = new File(tempFolder.newFolder(), "csv-order-sink").toURI().toString();
+        String sinkPath =
+                new File(HiveTestUtils.createTempSubDir(tempFolder, "csvSink"), "csv-order-sink")
+                        .toURI()
+                        .toString();
 
         tableEnv.executeSql(
                 "CREATE TABLE sink ("
@@ -272,12 +277,12 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testBatchReadWriteCsvWithProctime() {
+    void testBatchReadWriteCsvWithProctime() {
         testReadWriteCsvWithProctime(false);
     }
 
     @Test
-    public void testStreamReadWriteCsvWithProctime() {
+    void testStreamReadWriteCsvWithProctime() {
         testReadWriteCsvWithProctime(true);
     }
 
@@ -291,12 +296,12 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testTableApiWithProctimeForBatch() {
+    void testTableApiWithProctimeForBatch() {
         testTableApiWithProctime(false);
     }
 
     @Test
-    public void testTableApiWithProctimeForStreaming() {
+    void testTableApiWithProctimeForStreaming() {
         testTableApiWithProctime(true);
     }
 
@@ -347,7 +352,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testTableWithPrimaryKey() {
+    void testTableWithPrimaryKey() {
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         tableEnv.getConfig().set(TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, 1);
 
@@ -394,7 +399,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testNewTableFactory() throws Exception {
+    void testNewTableFactory() throws Exception {
         TableEnvironment tEnv =
                 TableEnvironment.create(EnvironmentSettings.newInstance().inBatchMode().build());
         tEnv.registerCatalog("myhive", hiveCatalog);
@@ -433,7 +438,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testConcurrentAccessHiveCatalog() throws Exception {
+    void testConcurrentAccessHiveCatalog() throws Exception {
         int numThreads = 5;
         ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
         try {
@@ -451,7 +456,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testTemporaryGenericTable() throws Exception {
+    void testTemporaryGenericTable() throws Exception {
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
         tableEnv.useCatalog(hiveCatalog.getName());
@@ -484,7 +489,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testCreateTableLike() throws Exception {
+    void testCreateTableLike() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode();
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
         tableEnv.useCatalog(hiveCatalog.getName());
@@ -508,7 +513,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testViewSchema() throws Exception {
+    void testViewSchema() throws Exception {
         TableEnvironment tableEnv = HiveTestUtils.createTableEnvInBatchMode(SqlDialect.DEFAULT);
         tableEnv.registerCatalog(hiveCatalog.getName(), hiveCatalog);
         tableEnv.useCatalog(hiveCatalog.getName());
@@ -561,7 +566,7 @@ public class HiveCatalogITCase {
     }
 
     @Test
-    public void testCreateAndGetManagedTable() throws Exception {
+    void testCreateAndGetManagedTable() throws Exception {
         TableEnvironment tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         String catalog = "myhive";
         String database = "default";

@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,10 +43,10 @@ import java.util.Properties;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Unit tests for the {@link ContinuousHiveSplitEnumerator}. */
-public class ContinuousHiveSplitEnumeratorTest {
+class ContinuousHiveSplitEnumeratorTest {
 
     @Test
-    public void testDiscoverSplitWhenNoReaderRegistered() throws Exception {
+    void testDiscoverSplitWhenNoReaderRegistered() throws Exception {
         final TestingSplitEnumeratorContext<HiveSourceSplit> context =
                 new TestingSplitEnumeratorContext<>(4);
         final HiveSourceSplit split = createSplit();
@@ -69,7 +69,7 @@ public class ContinuousHiveSplitEnumeratorTest {
     }
 
     @Test
-    public void testDiscoverWhenReaderRegistered() throws Exception {
+    void testDiscoverWhenReaderRegistered() throws Exception {
         final TestingSplitEnumeratorContext<HiveSourceSplit> context =
                 new TestingSplitEnumeratorContext<>(4);
 
@@ -99,7 +99,7 @@ public class ContinuousHiveSplitEnumeratorTest {
     }
 
     @Test
-    public void testRequestingReaderUnavailableWhenSplitDiscovered() throws Exception {
+    void testRequestingReaderUnavailableWhenSplitDiscovered() throws Exception {
         final TestingSplitEnumeratorContext<HiveSourceSplit> context =
                 new TestingSplitEnumeratorContext<>(4);
 

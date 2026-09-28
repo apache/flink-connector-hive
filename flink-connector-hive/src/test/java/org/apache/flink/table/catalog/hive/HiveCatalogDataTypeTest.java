@@ -34,12 +34,10 @@ import org.apache.flink.table.types.logical.BinaryType;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,9 +45,10 @@ import java.util.List;
 
 import static org.apache.flink.table.catalog.hive.util.Constants.IDENTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Test for data type mappings in HiveCatalog. */
-public class HiveCatalogDataTypeTest {
+class HiveCatalogDataTypeTest {
 
     private static HiveCatalog catalog;
 
@@ -62,16 +61,14 @@ public class HiveCatalogDataTypeTest {
     protected final ObjectPath path2 = new ObjectPath(db2, t2);
     protected final ObjectPath path3 = new ObjectPath(db1, t2);
 
-    @Rule public ExpectedException exception = ExpectedException.none();
-
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         catalog = HiveTestUtils.createHiveCatalog();
         catalog.open();
     }
 
-    @After
-    public void cleanup() throws Exception {
+    @AfterEach
+    void cleanup() throws Exception {
         if (catalog.tableExists(path1)) {
             catalog.dropTable(path1, true);
         }
@@ -92,15 +89,15 @@ public class HiveCatalogDataTypeTest {
         }
     }
 
-    @AfterClass
-    public static void closeup() {
+    @AfterAll
+    static void closeup() {
         if (catalog != null) {
             catalog.close();
         }
     }
 
     @Test
-    public void testDataTypes() throws Exception {
+    void testDataTypes() throws Exception {
         DataType[] types =
                 new DataType[] {
                     DataTypes.TINYINT(),
@@ -123,47 +120,45 @@ public class HiveCatalogDataTypeTest {
     }
 
     @Test
-    public void testNonSupportedBinaryDataTypes() throws Exception {
+    void testNonSupportedBinaryDataTypes() throws Exception {
         DataType[] types = new DataType[] {DataTypes.BINARY(BinaryType.MAX_LENGTH)};
 
         CatalogTable table = createCatalogTable(types);
 
         catalog.createDatabase(db1, createDb(), false);
 
-        exception.expect(UnsupportedOperationException.class);
-        catalog.createTable(path1, table, false);
+        assertThatThrownBy(() -> catalog.createTable(path1, table, false))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    public void testNonSupportedVarBinaryDataTypes() throws Exception {
+    void testNonSupportedVarBinaryDataTypes() throws Exception {
         DataType[] types = new DataType[] {DataTypes.VARBINARY(20)};
 
         CatalogTable table = createCatalogTable(types);
 
         catalog.createDatabase(db1, createDb(), false);
 
-        exception.expect(UnsupportedOperationException.class);
-        catalog.createTable(path1, table, false);
+        assertThatThrownBy(() -> catalog.createTable(path1, table, false))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    public void testCharTypeLength() throws Exception {
+    void testCharTypeLength() throws Exception {
         DataType[] types = new DataType[] {DataTypes.CHAR(HiveChar.MAX_CHAR_LENGTH + 1)};
 
-        exception.expect(CatalogException.class);
-        verifyDataTypes(types);
+        assertThatThrownBy(() -> verifyDataTypes(types)).isInstanceOf(CatalogException.class);
     }
 
     @Test
-    public void testVarCharTypeLength() throws Exception {
+    void testVarCharTypeLength() throws Exception {
         DataType[] types = new DataType[] {DataTypes.VARCHAR(HiveVarchar.MAX_VARCHAR_LENGTH + 1)};
 
-        exception.expect(CatalogException.class);
-        verifyDataTypes(types);
+        assertThatThrownBy(() -> verifyDataTypes(types)).isInstanceOf(CatalogException.class);
     }
 
     @Test
-    public void testComplexDataTypes() throws Exception {
+    void testComplexDataTypes() throws Exception {
         DataType[] types =
                 new DataType[] {
                     DataTypes.ARRAY(DataTypes.DOUBLE()),

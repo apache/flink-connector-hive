@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.http.util.Asserts;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,13 +48,13 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link ContinuousHiveSplitEnumerator.PartitionMonitor}. */
-public class PartitionMonitorTest {
+class PartitionMonitorTest {
 
     private ContinuousHiveSplitEnumerator.PartitionMonitor<Long> partitionMonitor;
     private List<Partition> testPartitionWithOffset = new ArrayList<>();
 
     @Test
-    public void testPartitionWithSameCreateTime() throws Exception {
+    void testPartitionWithSameCreateTime() throws Exception {
         preparePartitionMonitor();
         commitPartitionWithGivenCreateTime(Arrays.asList("p1=A1", "p2=B1"), 1);
         commitPartitionWithGivenCreateTime(Arrays.asList("p1=A1", "p2=B2"), 2);

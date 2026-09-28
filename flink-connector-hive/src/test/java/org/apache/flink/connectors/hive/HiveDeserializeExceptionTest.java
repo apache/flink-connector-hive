@@ -37,26 +37,25 @@ import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Sometimes users only add hive connector deps on client side but forget to add them on JM/TM. This
  * test is to make sure users get a clear message when that happens.
  */
-@RunWith(Parameterized.class)
-public class HiveDeserializeExceptionTest {
+class HiveDeserializeExceptionTest {
 
-    @Parameterized.Parameters(name = "{1}")
-    public static Object[] parameters() {
+    static Stream<Arguments> parameters() {
         HiveWriterFactory writerFactory =
                 new HiveWriterFactory(
                         new JobConf(),
@@ -106,20 +105,15 @@ public class HiveDeserializeExceptionTest {
 
         HiveSource<RowData> hiveSource = builder.buildWithDefaultBulkFormat();
 
-        return new Object[][] {
-            new Object[] {writerFactory, writerFactory.getClass().getSimpleName()},
-            new Object[] {compactReaderFactory, compactReaderFactory.getClass().getSimpleName()},
-            new Object[] {hiveSource, hiveSource.getClass().getSimpleName()}
-        };
+        return Stream.of(
+                Arguments.of(writerFactory, writerFactory.getClass().getSimpleName()),
+                Arguments.of(compactReaderFactory, compactReaderFactory.getClass().getSimpleName()),
+                Arguments.of(hiveSource, hiveSource.getClass().getSimpleName()));
     }
 
-    @Parameterized.Parameter public Object object;
-
-    @Parameterized.Parameter(1)
-    public String name;
-
-    @Test
-    public void test() throws Exception {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("parameters")
+    void test(Object object, String name) throws Exception {
         ClassLoader parentLoader = object.getClass().getClassLoader().getParent();
         assumeTrue(parentLoader != null);
         byte[] bytes = InstantiationUtil.serializeObject(object);
